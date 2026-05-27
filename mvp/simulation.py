@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 
 from agent import StudentAgent
+from environment import CourseEnvironment
 
 
 NOMBRES = [
@@ -70,3 +71,28 @@ def generar_agentes(cantidad: int = 10, semilla: int | None = None) -> list[Stud
         agentes.append(agente)
 
     return agentes
+
+
+def decidir_interaccion(
+    agente_1: StudentAgent,
+    agente_2: StudentAgent,
+    entorno: CourseEnvironment,
+    generador: random.Random | None = None,
+) -> dict[str, object]:
+    """Decide whether two students interact using the homophily rule."""
+    generador = generador or random.Random()
+    similitud = agente_1.calcular_similitud(agente_2)
+    probabilidad = entorno.calcular_probabilidad_interaccion(agente_1, agente_2)
+    interactuan = generador.random() < probabilidad
+
+    if interactuan:
+        agente_1.registrar_interaccion(agente_2)
+        agente_2.registrar_interaccion(agente_1)
+
+    return {
+        "agente_1": agente_1.id,
+        "agente_2": agente_2.id,
+        "similitud": similitud,
+        "probabilidad_interaccion": probabilidad,
+        "interaccion": interactuan,
+    }
