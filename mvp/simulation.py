@@ -44,6 +44,15 @@ GUSTOS_POSIBLES = [
 
 GENEROS_POSIBLES = ["F", "M", "Otro"]
 CARRERA_BASE = "Ingenieria en Ciencias de la Computacion"
+DIAS_SEMANA = [
+    "lunes",
+    "martes",
+    "miercoles",
+    "jueves",
+    "viernes",
+    "sabado",
+    "domingo",
+]
 
 
 def generar_agentes(cantidad: int = 10, semilla: int | None = None) -> list[StudentAgent]:
@@ -96,3 +105,42 @@ def decidir_interaccion(
         "probabilidad_interaccion": probabilidad,
         "interaccion": interactuan,
     }
+
+
+def simular_dias(
+    entorno: CourseEnvironment,
+    duracion_dias: int = 7,
+    semilla: int | None = None,
+) -> list[dict[str, object]]:
+    """Run the interaction simulation for a short period of days."""
+    if not 7 <= duracion_dias <= 30:
+        raise ValueError("La duracion de la simulacion debe estar entre 7 y 30 dias.")
+
+    generador = random.Random(semilla)
+    registros = []
+
+    for dia_numero in range(1, duracion_dias + 1):
+        dia_semana = DIAS_SEMANA[(dia_numero - 1) % len(DIAS_SEMANA)]
+        interacciones_dia = 0
+
+        if entorno.hay_clase(dia_semana):
+            for agente_1, agente_2 in entorno.obtener_pares_posibles():
+                resultado = decidir_interaccion(
+                    agente_1,
+                    agente_2,
+                    entorno,
+                    generador,
+                )
+                resultado["dia"] = dia_numero
+                resultado["dia_semana"] = dia_semana
+                registros.append(resultado)
+
+                if resultado["interaccion"]:
+                    interacciones_dia += 1
+
+        print(
+            f"Dia {dia_numero} ({dia_semana}) completado: "
+            f"{interacciones_dia} interacciones."
+        )
+
+    return registros
