@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import csv
 import random
+from pathlib import Path
 
 from agent import StudentAgent
 from environment import CourseEnvironment
@@ -144,3 +146,21 @@ def simular_dias(
         )
 
     return registros
+
+
+def exportar_interacciones(
+    registros_interaccion: list[dict[str, object]],
+    ruta_salida: str | Path = "outputs/interactions.csv",
+) -> Path:
+    """Export simulation interaction records to a CSV file."""
+    ruta = Path(ruta_salida)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    columnas = ["dia", "agente_1", "agente_2", "similitud", "interaccion"]
+
+    with ruta.open("w", newline="", encoding="utf-8") as archivo:
+        escritor = csv.DictWriter(archivo, fieldnames=columnas)
+        escritor.writeheader()
+        for registro in registros_interaccion:
+            escritor.writerow({columna: registro[columna] for columna in columnas})
+
+    return ruta

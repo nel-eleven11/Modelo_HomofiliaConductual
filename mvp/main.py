@@ -1,8 +1,12 @@
 """Entry point for the behavioral homophily MVP."""
 
 from environment import crear_curso_base
-from network_analysis import calcular_metricas_red, construir_red_interacciones
-from simulation import generar_agentes, simular_dias
+from network_analysis import (
+    calcular_metricas_red,
+    construir_red_interacciones,
+    exportar_metricas_red,
+)
+from simulation import exportar_interacciones, generar_agentes, simular_dias
 from visualization import visualizar_red
 
 
@@ -29,7 +33,12 @@ def main() -> None:
     for nombre, valor in metricas.items():
         print(f"{nombre}: {valor}")
 
+    ruta_interacciones = exportar_interacciones(registros_interaccion)
+    ruta_metricas = exportar_metricas_red(metricas)
     ruta_visualizacion = visualizar_red(red)
+
+    print(f"Interacciones guardadas: {ruta_interacciones}")
+    print(f"Metricas guardadas: {ruta_metricas}")
     print(f"Visualizacion guardada: {ruta_visualizacion}")
 
 
