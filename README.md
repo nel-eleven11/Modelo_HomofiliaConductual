@@ -1,101 +1,82 @@
-# MVP de Homofilia Conductual
+# Simulación de homofilia conductual
 
-Este proyecto simula interacciones sociales entre estudiantes ficticios de
-Ingenieria en Ciencias de la Computacion usando reglas simples de homofilia
-conductual. El objetivo del MVP es probar una idea conceptual: estudiantes con
-atributos mas similares tienen mayor probabilidad de interactuar.
+Modelo exploratorio basado en agentes para estudiar cómo la homofilia conductual
+influye en redes de interacción de una cohorte sintética de 80 estudiantes de
+Computación de la Universidad del Valle de Guatemala, durante 10 semestres.
+Los agentes no representan personas reales y el modelo no predice amistades reales.
+Los parámetros iniciales son operacionales, no estimaciones empíricamente calibradas.
 
-## Alcance del MVP
+## Estado
 
-- Crea entre 10 y 20 agentes ficticios.
-- Asigna atributos basicos: edad, genero, carrera, semestre, gustos,
-  extroversion y responsabilidad.
-- Usa un curso compartido como entorno social inicial.
-- Simula interacciones por dias durante un periodo corto.
-- Registra las interacciones observadas.
-- Construye una red social con NetworkX.
-- Calcula metricas basicas de la red.
-- Genera una visualizacion final en PNG.
-- Exporta resultados en archivos CSV.
+Fase 0: preparación del repositorio. Incluye un paquete instalable, entorno virtual,
+smoke test y configuración de pytest, Ruff y mypy. La configuración del modelo se
+implementará en la Fase 1; el primer motor de conversaciones llegará en la Fase 8.
+En esta fase, la comprobación mínima es la importación del paquete: todavía no hay
+una simulación ejecutable ni llamadas a APIs.
 
-## Instalacion
+Las reglas metodológicas están en [AGENTS.md](AGENTS.md) y el orden de implementación
+en [PLAN.md](PLAN.md).
 
-```bash
-python -m pip install -r requirements.txt
-```
+## Instalación local
 
-## Ejecucion
-
-Desde la raiz del repositorio:
+Se requiere Python 3.14 o superior. Entorno verificado con Python 3.14.2.
+Desde la raíz del repositorio, en Linux/macOS:
 
 ```bash
-python mvp/main.py
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
-La ejecucion imprime el avance diario de la simulacion, genera la red final y
-guarda los resultados en la carpeta `outputs/`.
+En Windows PowerShell, activar con `.venv\Scripts\Activate.ps1`.
+La instalación editable permite importar `homophily_sim` sin configurar `PYTHONPATH`.
+`requirements-runtime.txt` contiene las dependencias del paquete; `requirements.txt`
+instala también el proyecto y `requirements-dev.txt` agrega las herramientas de desarrollo.
+Ambos usan `constraints.txt` para fijar las versiones directas y transitivas
+verificadas en Linux x86_64 con CPython 3.14.2. Otros sistemas no se han validado;
+las herramientas de construcción se resuelven por separado durante la instalación.
 
-## Archivos Generados
+## Verificación
 
-```text
-outputs/interactions.csv
-outputs/network_metrics.csv
-outputs/network_final.png
+Con el entorno activado:
+
+```bash
+pytest
+ruff check .
+mypy
+pytest tests/smoke
+python -c "import homophily_sim; print(homophily_sim.__doc__)"
+python -m pip check
 ```
 
-`interactions.csv` contiene el dia, los agentes evaluados, su similitud y si
-ocurrio una interaccion.
-
-`network_metrics.csv` contiene el numero de agentes, interacciones,
-conexiones, densidad, grado promedio y componentes conectados.
-
-`network_final.png` muestra la red final; cada nodo representa un estudiante y
-el grosor de cada arista representa la frecuencia de interaccion.
-
-## Modelo
-
-Cada estudiante se modela como un agente con atributos sinteticos. La similitud
-entre dos agentes aumenta cuando comparten gustos, carrera, semestre, genero y
-un nivel parecido de extroversion.
-
-La probabilidad de interaccion usa la formula:
-
-```text
-probabilidad_interaccion = probabilidad_base + similitud * peso_homofilia
-```
-
-Para esta version inicial se usan estos valores:
-
-```text
-probabilidad_base = 0.10
-peso_homofilia = 0.50
-```
+El smoke test comprueba que el paquete se puede localizar e importar.
+Las pruebas no requieren internet ni credenciales.
 
 ## Estructura
 
 ```text
-.
-├── README.md
-├── requirements.txt
-└── mvp/
-    ├── agent.py
-    ├── environment.py
-    ├── main.py
-    ├── network_analysis.py
-    ├── simulation.py
-    └── visualization.py
+src/homophily_sim/  Paquete Python; módulos por responsabilidad en fases posteriores
+configs/           Configuraciones del modelo (Fase 1)
+data/demographics/ Datos de referencia demográfica
+data/topics/      Banco de temas versionado (Fase 3)
+tests/unit/        Pruebas unitarias
+tests/integration/ Pruebas de integración
+tests/smoke/       Comprobación mínima de instalación
+outputs/           Resultados locales, excluidos de Git
 ```
 
-## Limitaciones
+La lógica de simulación, datos, red, lenguaje, sentimiento, visualización y
+persistencia se implementará en módulos separados conforme avance el plan.
 
-- Los datos son sinteticos.
-- Solo se usa un curso.
-- No se modela movilidad real dentro del campus.
-- No se incluyen horarios complejos.
-- No se incluyen actividades extracurriculares.
-- La personalidad se simplifica a pocos atributos.
-- La interaccion depende de reglas simples.
-- La red no representa datos reales de estudiantes.
+## Variables de entorno y resultados
 
-Este MVP es una primera prueba conceptual y no una representacion real de la
-poblacion estudiantil.
+`.env.example` documenta las variables previstas. Para una futura integración,
+puede copiarse a `.env` y configurarse localmente; la Fase 0 no necesita una API key.
+`.env`, sus variantes locales, el entorno virtual, las cachés y los resultados en
+`outputs/` nuevos están excluidos de Git; `outputs/.gitkeep` conserva la carpeta.
+Los resultados del MVP que ya estaban versionados no quedan excluidos
+retroactivamente: su eliminación previa en el árbol de trabajo queda fuera del
+commit de la Fase 0.
+Gemini, Mesa, NetworkX, matplotlib y transformers se incorporarán en sus fases.
