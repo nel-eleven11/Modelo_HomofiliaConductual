@@ -8,11 +8,9 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 0: preparación del repositorio. Incluye un paquete instalable, entorno virtual,
-smoke test y configuración de pytest, Ruff y mypy. La configuración del modelo se
-implementará en la Fase 1; el primer motor de conversaciones llegará en la Fase 8.
-En esta fase, la comprobación mínima es la importación del paquete: todavía no hay
-una simulación ejecutable ni llamadas a APIs.
+Fase 1: configuración tipada y escenarios de homofilia. Los YAML comparten una
+base y solo modifican `h` y el nombre del escenario. La simulación de conversaciones
+corresponde a la Fase 8.
 
 Las reglas metodológicas están en [AGENTS.md](AGENTS.md) y el orden de implementación
 en [PLAN.md](PLAN.md).
@@ -80,3 +78,15 @@ Los resultados del MVP que ya estaban versionados no quedan excluidos
 retroactivamente: su eliminación previa en el árbol de trabajo queda fuera del
 commit de la Fase 0.
 Gemini, Mesa, NetworkX, matplotlib y transformers se incorporarán en sus fases.
+
+## Configuración
+
+```python
+from homophily_sim.config import load_config
+
+config = load_config("configs/homophily_medium.yaml")
+print(config.h)  # 0.5
+```
+
+El cargador valida rangos, pesos y estructura académica. `max_age_difference=10`
+es un límite operacional para la similitud por edad y puede ajustarse en sensibilidad.

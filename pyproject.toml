@@ -32,3 +32,7 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.14"
 files = ["src", "tests"]
 strict = true
+
+[[tool.mypy.overrides]]
+module = ["yaml"]
+ignore_missing_imports = true

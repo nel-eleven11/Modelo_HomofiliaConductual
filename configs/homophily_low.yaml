@@ -1,0 +1,3 @@
+extends: base.yaml
+scenario: homophily_low
+h: 0.20
