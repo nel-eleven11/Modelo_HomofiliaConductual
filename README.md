@@ -8,7 +8,8 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 1: configuración tipada y escenarios de homofilia. Los YAML comparten una
+Fase 2: entidades validadas de estudiante, curso, sección, tema e interacción.
+La Fase 1 añadió la configuración tipada y los escenarios de homofilia. Los YAML comparten una
 base y solo modifican `h` y el nombre del escenario. La simulación de conversaciones
 corresponde a la Fase 8.
 
