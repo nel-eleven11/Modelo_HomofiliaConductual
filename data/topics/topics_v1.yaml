@@ -1,0 +1,276 @@
+topic_bank_version: v1
+taxonomy:
+  technology:
+  - hardware
+  - privacy
+  - gadgets
+  programming:
+  - languages
+  - open_source
+  - debugging
+  artificial_intelligence:
+  - ai_assistants
+  - automation
+  - ai_art
+  videogames:
+  - cooperative_games
+  - strategy_games
+  - indie_games
+  sports:
+  - football
+  - basketball
+  - team_sports
+  music:
+  - live_music
+  - instruments
+  - playlists
+  cinema:
+  - documentaries
+  - animation
+  anime:
+  - anime_series
+  - anime_movies
+  literature:
+  - fiction
+  - nonfiction
+  science:
+  - astronomy
+  - experiments
+  art:
+  - drawing
+  - photography
+  exercise:
+  - running
+  - fitness
+  travel:
+  - local_travel
+  - international_travel
+  animals:
+  - pets
+  - wildlife
+  university_life:
+  - campus_events
+  - study_groups
+related_categories:
+  technology:
+  - programming
+  - artificial_intelligence
+  programming:
+  - technology
+  - artificial_intelligence
+  - university_life
+  artificial_intelligence:
+  - technology
+  - programming
+  - science
+  videogames:
+  - anime
+  sports:
+  - exercise
+  - university_life
+  music:
+  - art
+  cinema:
+  - anime
+  - literature
+  - art
+  anime:
+  - videogames
+  - cinema
+  literature:
+  - cinema
+  science:
+  - artificial_intelligence
+  art:
+  - music
+  - cinema
+  exercise:
+  - sports
+  travel:
+  - animals
+  animals:
+  - travel
+  university_life:
+  - sports
+  - programming
+topics:
+- topic_id: technology_hardware
+  category: technology
+  subcategory: hardware
+  prompt: ¿Prefieres reparar un dispositivo o reemplazarlo?
+  polarization_level: MEDIUM
+- topic_id: technology_privacy
+  category: technology
+  subcategory: privacy
+  prompt: ¿Debería una aplicación pedir menos datos personales?
+  polarization_level: LOW
+- topic_id: technology_gadgets
+  category: technology
+  subcategory: gadgets
+  prompt: ¿Te entusiasma probar nuevos dispositivos?
+  polarization_level: LOW
+- topic_id: programming_languages
+  category: programming
+  subcategory: languages
+  prompt: ¿Te gusta aprender lenguajes de programación nuevos?
+  polarization_level: MEDIUM
+- topic_id: programming_open_source
+  category: programming
+  subcategory: open_source
+  prompt: ¿Te interesa contribuir a proyectos de código abierto?
+  polarization_level: LOW
+- topic_id: programming_debugging
+  category: programming
+  subcategory: debugging
+  prompt: ¿Disfrutas resolver errores difíciles?
+  polarization_level: LOW
+- topic_id: artificial_intelligence_ai_assistants
+  category: artificial_intelligence
+  subcategory: ai_assistants
+  prompt: ¿Te ayudan los asistentes de IA a estudiar?
+  polarization_level: MEDIUM
+- topic_id: artificial_intelligence_automation
+  category: artificial_intelligence
+  subcategory: automation
+  prompt: ¿Crees que automatizar tareas repetitivas mejora el trabajo?
+  polarization_level: LOW
+- topic_id: artificial_intelligence_ai_art
+  category: artificial_intelligence
+  subcategory: ai_art
+  prompt: ¿Te interesa el arte creado con ayuda de IA?
+  polarization_level: LOW
+- topic_id: videogames_cooperative_games
+  category: videogames
+  subcategory: cooperative_games
+  prompt: ¿Prefieres jugar videojuegos en equipo?
+  polarization_level: MEDIUM
+- topic_id: videogames_strategy_games
+  category: videogames
+  subcategory: strategy_games
+  prompt: ¿Disfrutas planear estrategias en videojuegos?
+  polarization_level: LOW
+- topic_id: videogames_indie_games
+  category: videogames
+  subcategory: indie_games
+  prompt: ¿Te interesan los videojuegos independientes?
+  polarization_level: LOW
+- topic_id: sports_football
+  category: sports
+  subcategory: football
+  prompt: ¿Te gusta ver partidos de fútbol?
+  polarization_level: MEDIUM
+- topic_id: sports_basketball
+  category: sports
+  subcategory: basketball
+  prompt: ¿Te interesa seguir torneos de baloncesto?
+  polarization_level: LOW
+- topic_id: sports_team_sports
+  category: sports
+  subcategory: team_sports
+  prompt: ¿Prefieres practicar deportes en equipo?
+  polarization_level: LOW
+- topic_id: music_live_music
+  category: music
+  subcategory: live_music
+  prompt: ¿Prefieres escuchar música en vivo?
+  polarization_level: MEDIUM
+- topic_id: music_instruments
+  category: music
+  subcategory: instruments
+  prompt: ¿Te gustaría aprender un instrumento?
+  polarization_level: LOW
+- topic_id: music_playlists
+  category: music
+  subcategory: playlists
+  prompt: ¿Compartes listas de reproducción con tus amigos?
+  polarization_level: LOW
+- topic_id: cinema_documentaries
+  category: cinema
+  subcategory: documentaries
+  prompt: ¿Te gustan los documentales?
+  polarization_level: MEDIUM
+- topic_id: cinema_animation
+  category: cinema
+  subcategory: animation
+  prompt: ¿Disfrutas las películas animadas?
+  polarization_level: LOW
+- topic_id: anime_anime_series
+  category: anime
+  subcategory: anime_series
+  prompt: ¿Te gusta comentar series de anime?
+  polarization_level: MEDIUM
+- topic_id: anime_anime_movies
+  category: anime
+  subcategory: anime_movies
+  prompt: ¿Disfrutas las películas de anime?
+  polarization_level: LOW
+- topic_id: literature_fiction
+  category: literature
+  subcategory: fiction
+  prompt: ¿Prefieres leer ficción?
+  polarization_level: MEDIUM
+- topic_id: literature_nonfiction
+  category: literature
+  subcategory: nonfiction
+  prompt: ¿Te interesan los libros de divulgación?
+  polarization_level: LOW
+- topic_id: science_astronomy
+  category: science
+  subcategory: astronomy
+  prompt: ¿Te interesan los descubrimientos astronómicos?
+  polarization_level: MEDIUM
+- topic_id: science_experiments
+  category: science
+  subcategory: experiments
+  prompt: ¿Disfrutas conocer experimentos científicos?
+  polarization_level: LOW
+- topic_id: art_drawing
+  category: art
+  subcategory: drawing
+  prompt: ¿Te gusta dibujar en tu tiempo libre?
+  polarization_level: MEDIUM
+- topic_id: art_photography
+  category: art
+  subcategory: photography
+  prompt: ¿Te interesa la fotografía?
+  polarization_level: LOW
+- topic_id: exercise_running
+  category: exercise
+  subcategory: running
+  prompt: ¿Te gusta salir a correr?
+  polarization_level: MEDIUM
+- topic_id: exercise_fitness
+  category: exercise
+  subcategory: fitness
+  prompt: ¿Prefieres hacer ejercicio con otras personas?
+  polarization_level: LOW
+- topic_id: travel_local_travel
+  category: travel
+  subcategory: local_travel
+  prompt: ¿Te gusta visitar lugares nuevos en Guatemala?
+  polarization_level: MEDIUM
+- topic_id: travel_international_travel
+  category: travel
+  subcategory: international_travel
+  prompt: ¿Te interesa conocer otras culturas viajando?
+  polarization_level: LOW
+- topic_id: animals_pets
+  category: animals
+  subcategory: pets
+  prompt: ¿Te gusta convivir con mascotas?
+  polarization_level: MEDIUM
+- topic_id: animals_wildlife
+  category: animals
+  subcategory: wildlife
+  prompt: ¿Te interesa la protección de la fauna silvestre?
+  polarization_level: LOW
+- topic_id: university_life_campus_events
+  category: university_life
+  subcategory: campus_events
+  prompt: ¿Te gusta participar en actividades del campus?
+  polarization_level: MEDIUM
+- topic_id: university_life_study_groups
+  category: university_life
+  subcategory: study_groups
+  prompt: ¿Prefieres estudiar en grupo?
+  polarization_level: LOW
