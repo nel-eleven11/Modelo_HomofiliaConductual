@@ -8,7 +8,8 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 3: banco versionado de 36 temas y taxonomía común de intereses.
+Fase 4: población sintética reproducible con perfiles demográficos versionados.
+La Fase 3 añadió un banco de 36 temas y una taxonomía común de intereses.
 La Fase 2 añadió entidades validadas de estudiante, curso, sección, tema e interacción.
 La Fase 1 añadió la configuración tipada y los escenarios de homofilia. Los YAML comparten una
 base y solo modifican `h` y el nombre del escenario. La simulación de conversaciones
@@ -99,3 +100,11 @@ es un límite operacional para la similitud por edad y puede ajustarse en sensib
 relaciones entre categorías. `load_topics(path)` valida el banco.
 `topic_interest_score(interests, topic, bank)` devuelve 1.0 por coincidencia
 directa, 0.5 por categoría relacionada y 0.0 sin afinidad.
+
+## Población sintética
+
+`generate_population(config, bank, profile, seed)` crea los mismos 80 agentes
+para una configuración, banco, perfil y semilla iguales. Los perfiles de
+`data/demographics/profiles_v1.yaml` son supuestos sintéticos provisionales;
+sus nombres no implican calibración empírica. La distribución de cantidades de
+intereses y la normal truncada de extroversión se configuran en `configs/base.yaml`.

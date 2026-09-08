@@ -1,0 +1,14 @@
+version: synthetic_v1
+profiles:
+  national_reference:
+    age_probabilities: {18: 0.40, 19: 0.35, 20: 0.25}
+    female_probability: 0.50
+    guatemala_department_probability: 0.50
+  department_reference:
+    age_probabilities: {18: 0.40, 19: 0.35, 20: 0.25}
+    female_probability: 0.50
+    guatemala_department_probability: 0.75
+  custom:
+    age_probabilities: {18: 0.40, 19: 0.35, 20: 0.25}
+    female_probability: 0.50
+    guatemala_department_probability: 0.50

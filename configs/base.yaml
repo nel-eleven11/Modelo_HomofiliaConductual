@@ -26,3 +26,12 @@ w_sentiment: 0.25
 epsilon_start: 0.25
 initial_relationship: 0.50
 max_age_difference: 10
+demographic_profile: custom
+interest_count_probabilities:
+  1: 0.20
+  2: 0.25
+  3: 0.30
+  4: 0.15
+  5: 0.10
+extraversion_mean: 5.0
+extraversion_std: 2.0

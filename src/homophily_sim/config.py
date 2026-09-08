@@ -40,6 +40,10 @@ class SimulationConfig(BaseModel):
     epsilon_start: float = Field(gt=0, le=1)
     initial_relationship: float = Field(ge=0, le=1)
     max_age_difference: int = Field(gt=0)
+    demographic_profile: str = Field(min_length=1)
+    interest_count_probabilities: dict[int, float]
+    extraversion_mean: float = Field(ge=0, le=10)
+    extraversion_std: float = Field(ge=0)
 
     @model_validator(mode="after")
     def validate_structure(self) -> Self:
@@ -52,6 +56,12 @@ class SimulationConfig(BaseModel):
             raise ValueError("sections_per_course cannot exceed population_size")
         if self.semesters != 2 * self.years:
             raise ValueError("semesters must equal twice years")
+        if set(self.interest_count_probabilities) != set(range(1, 6)):
+            raise ValueError("interest count probabilities must cover 1 through 5")
+        if any(value < 0 for value in self.interest_count_probabilities.values()):
+            raise ValueError("interest count probabilities cannot be negative")
+        if abs(sum(self.interest_count_probabilities.values()) - 1) > 1e-9:
+            raise ValueError("interest count probabilities must sum to 1")
         if self.sessions_per_course_per_week > self.days_per_week:
             raise ValueError("a course cannot meet more than once per day")
         return self
