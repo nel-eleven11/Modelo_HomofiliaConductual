@@ -8,7 +8,9 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 4: población sintética reproducible con perfiles demográficos versionados.
+Fase 5: ecuaciones sociales puras para similitud, participación, evaluación
+y actualización de relaciones. La Fase 4 añadió la población sintética reproducible
+con perfiles demográficos versionados.
 La Fase 3 añadió un banco de 36 temas y una taxonomía común de intereses.
 La Fase 2 añadió entidades validadas de estudiante, curso, sección, tema e interacción.
 La Fase 1 añadió la configuración tipada y los escenarios de homofilia. Los YAML comparten una
@@ -108,3 +110,10 @@ para una configuración, banco, perfil y semilla iguales. Los perfiles de
 `data/demographics/profiles_v1.yaml` son supuestos sintéticos provisionales;
 sus nombres no implican calibración empírica. La distribución de cantidades de
 intereses y la normal truncada de extroversión se configuran en `configs/base.yaml`.
+
+## Ecuaciones sociales
+
+`social/` implementa las ecuaciones documentadas en AGENTS.md. La probabilidad
+de participación se calcula sin umbral; el muestreo Bernoulli pertenece al motor
+de conversaciones de la Fase 8. `h` modifica la influencia de similitud y
+relación previa, mientras `alpha_relationship` se mantiene independiente.
