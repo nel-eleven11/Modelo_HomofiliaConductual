@@ -8,8 +8,9 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 5: ecuaciones sociales puras para similitud, participación, evaluación
-y actualización de relaciones. La Fase 4 añadió la población sintética reproducible
+Fase 6: calendario académico reproducible de 10 semestres.
+La Fase 5 añadió ecuaciones sociales puras para similitud, participación,
+evaluación y actualización de relaciones. La Fase 4 añadió la población sintética reproducible
 con perfiles demográficos versionados.
 La Fase 3 añadió un banco de 36 temas y una taxonomía común de intereses.
 La Fase 2 añadió entidades validadas de estudiante, curso, sección, tema e interacción.
@@ -117,3 +118,11 @@ intereses y la normal truncada de extroversión se configuran en `configs/base.y
 de participación se calcula sin umbral; el muestreo Bernoulli pertenece al motor
 de conversaciones de la Fase 8. `h` modifica la influencia de similitud y
 relación previa, mientras `alpha_relationship` se mantiene independiente.
+
+## Calendario académico
+
+`generate_academic_calendar(config, run_seed)` crea 10 horarios semestrales.
+Cada uno repite un horario semanal fijo durante 20 semanas, con 12 períodos
+repartidos en cinco días (2, 2, 2, 3 y 3); cada curso se reúne dos veces en
+días distintos. El calendario define encuentros de clase, no conversaciones;
+el motor de conversaciones llega en la Fase 8.
