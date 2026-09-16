@@ -26,3 +26,25 @@ def test_invalid_weights_and_sections_rejected() -> None:
         SimulationConfig.model_validate({**config, "w_interest": 0.8})
     with pytest.raises(ValidationError):
         SimulationConfig.model_validate({**config, "sections_per_course": 81})
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid"),
+    [
+        ("w_agreement", 0.8),
+        ("h", -0.1),
+        ("alpha_relationship", 1.1),
+        ("interest_count_probabilities", {1: 1.0}),
+    ],
+)
+def test_invalid_parameter_groups_rejected(field: str, invalid: object) -> None:
+    config = load_config(CONFIGS / "base.yaml").model_dump()
+    with pytest.raises(ValidationError):
+        SimulationConfig.model_validate({**config, field: invalid})
+
+
+def test_non_mapping_yaml_is_rejected(tmp_path: Path) -> None:
+    path = tmp_path / "invalid.yaml"
+    path.write_text("- not\n- a mapping\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="mapping"):
+        load_config(path)

@@ -1,11 +1,14 @@
 """Small checks of the model's social equations."""
 
+from math import exp
 from pathlib import Path
+
+import pytest
 
 from homophily_sim.config import SimulationConfig, load_config
 from homophily_sim.domain.agent import Origin, Sex, StudentAgent
 from homophily_sim.social.evaluation import agreement, interaction_score, sentiment_valence
-from homophily_sim.social.participation import participation_probability
+from homophily_sim.social.participation import participation_probability, sigmoid
 from homophily_sim.social.relationships import update_relationship
 from homophily_sim.social.similarity import age_similarity, agent_similarity, interest_jaccard
 
@@ -54,3 +57,13 @@ def test_agent_similarity_stays_bounded() -> None:
                           interests={"animals"}, extraversion=5)
     assert agent_similarity(first, first, BASE) == 1
     assert 0 <= agent_similarity(first, second, BASE) <= 1
+
+
+def test_participation_matches_equation_and_handles_extremes() -> None:
+    linear = -2.3 + 0.8 * 0.5 + 1.4 * 0.5 + (0.6 + 0.5) * 0.5 + 0.5 * 0.4
+    expected = 1 / (1 + exp(-linear))
+    assert participation_probability(5, 0.5, 0.5, 0.4, BASE) == pytest.approx(expected)
+    assert sigmoid(-1000) == 0
+    assert sigmoid(1000) == 1
+    with pytest.raises(ValueError):
+        participation_probability(11, 0.5, 0.5, 0.4, BASE)

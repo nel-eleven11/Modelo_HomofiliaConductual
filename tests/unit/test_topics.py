@@ -30,3 +30,20 @@ def test_duplicate_ids_are_rejected() -> None:
     raw["topics"] = [*raw["topics"], raw["topics"][0]]
     with pytest.raises(ValidationError):
         TopicBank.model_validate(raw)
+
+
+def test_unknown_category_and_asymmetric_relationship_are_rejected() -> None:
+    raw = BANK.model_dump()
+    raw["topics"][0]["category"] = "unknown"
+    with pytest.raises(ValidationError, match="unknown category"):
+        TopicBank.model_validate(raw)
+
+    raw = BANK.model_dump()
+    raw["related_categories"]["technology"].remove("programming")
+    with pytest.raises(ValidationError, match="symmetric"):
+        TopicBank.model_validate(raw)
+
+
+def test_unknown_interest_is_rejected() -> None:
+    with pytest.raises(ValueError, match="taxonomy"):
+        topic_interest_score({"unknown"}, BANK.topics[0], BANK)
