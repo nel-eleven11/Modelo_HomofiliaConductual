@@ -8,7 +8,8 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 6: calendario académico reproducible de 10 semestres.
+Fase 7: inscripción reproducible y balanceada en secciones por curso.
+La Fase 6 añadió el calendario académico reproducible de 10 semestres.
 La Fase 5 añadió ecuaciones sociales puras para similitud, participación,
 evaluación y actualización de relaciones. La Fase 4 añadió la población sintética reproducible
 con perfiles demográficos versionados.
@@ -126,3 +127,14 @@ Cada uno repite un horario semanal fijo durante 20 semanas, con 12 períodos
 repartidos en cinco días (2, 2, 2, 3 y 3); cada curso se reúne dos veces en
 días distintos. El calendario define encuentros de clase, no conversaciones;
 el motor de conversaciones llega en la Fase 8.
+
+## Inscripción en secciones
+
+`enroll_semester(students, schedule, config, run_seed)` asigna cada estudiante
+una vez a cada curso del semestre y guarda sus cursos y secciones en el agente.
+Con 80 estudiantes y tres secciones, los tamaños por curso son 27, 27 y 26.
+El primer semestre usa una asignación aleatoria balanceada. Después, cada
+estudiante elige entre secciones con cupo mediante
+`gamma_section * vínculo_promedio + (1 - gamma_section) * componente_aleatorio`.
+El vínculo es dirigido desde el estudiante hacia los miembros ya asignados;
+para una sección vacía se usa `initial_relationship`. El cupo siempre se respeta.
