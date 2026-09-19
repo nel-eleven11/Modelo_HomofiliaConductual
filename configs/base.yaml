@@ -35,3 +35,4 @@ interest_count_probabilities:
   5: 0.10
 extraversion_mean: 5.0
 extraversion_std: 2.0
+utterance_max_words: 40

@@ -44,6 +44,7 @@ class SimulationConfig(BaseModel):
     interest_count_probabilities: dict[int, float]
     extraversion_mean: float = Field(ge=0, le=10)
     extraversion_std: float = Field(ge=0)
+    utterance_max_words: int = Field(gt=0, le=100)
 
     @model_validator(mode="after")
     def validate_structure(self) -> Self:

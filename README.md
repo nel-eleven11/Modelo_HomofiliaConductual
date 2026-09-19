@@ -8,16 +8,17 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 7: inscripción reproducible y balanceada en secciones por curso.
+Fase 8: motor de conversaciones reproducible con lenguaje y sentimiento
+simulados. Cada clase de cada sección produce un evento de conversación.
+La Fase 7 añadió la inscripción balanceada en secciones por curso.
 La Fase 6 añadió el calendario académico reproducible de 10 semestres.
 La Fase 5 añadió ecuaciones sociales puras para similitud, participación,
 evaluación y actualización de relaciones. La Fase 4 añadió la población sintética reproducible
 con perfiles demográficos versionados.
 La Fase 3 añadió un banco de 36 temas y una taxonomía común de intereses.
 La Fase 2 añadió entidades validadas de estudiante, curso, sección, tema e interacción.
-La Fase 1 añadió la configuración tipada y los escenarios de homofilia. Los YAML comparten una
-base y solo modifican `h` y el nombre del escenario. La simulación de conversaciones
-corresponde a la Fase 8.
+La Fase 1 añadió la configuración tipada y los escenarios de homofilia. Los YAML
+comparten una base y solo modifican `h` y el nombre del escenario.
 
 Las reglas metodológicas están en [AGENTS.md](AGENTS.md) y el orden de implementación
 en [PLAN.md](PLAN.md).
@@ -138,3 +139,19 @@ estudiante elige entre secciones con cupo mediante
 `gamma_section * vínculo_promedio + (1 - gamma_section) * componente_aleatorio`.
 El vínculo es dirigido desde el estudiante hacia los miembros ya asignados;
 para una sección vacía se usa `initial_relationship`. El cupo siempre se respeta.
+
+## Conversaciones simuladas
+
+`simulate_week(...)` ejecuta un evento por reunión de sección. Selecciona un
+iniciador con peso suavizado por extroversión y expone a `ceil(N/4)` compañeros.
+Cada expuesto decide si responde mediante Bernoulli usando la probabilidad del
+modelo. El expuesto evalúa el mensaje inicial y, si responde, el iniciador evalúa
+su respuesta. Cada evaluación actualiza un vínculo dirigido y crea un
+`InteractionRecord`. Los timestamps se derivan del calendario simulado.
+
+El proveedor `MockLanguageModelProvider` produce texto breve en español y
+`MockSentimentAnalyzer` devuelve una valencia neutral fija. Son componentes
+deterministas para pilotos sin internet; `utterance_max_words` se configura en
+`configs/base.yaml`. Una simulación mínima de 20 agentes y una semana se comprueba
+con `pytest tests/smoke/test_mock_week.py`. La persistencia de ejecuciones se
+implementará en la Fase 9.
