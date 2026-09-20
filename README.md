@@ -8,7 +8,9 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 8: motor de conversaciones reproducible con lenguaje y sentimiento
+Fase 9: persistencia de ejecuciones en JSON y Parquet, con trazabilidad de
+semilla, revisión Git, versiones de software y recursos del modelo.
+La Fase 8 añadió un motor de conversaciones reproducible con lenguaje y sentimiento
 simulados. Cada clase de cada sección produce un evento de conversación.
 La Fase 7 añadió la inscripción balanceada en secciones por curso.
 La Fase 6 añadió el calendario académico reproducible de 10 semestres.
@@ -74,7 +76,7 @@ outputs/           Resultados locales, excluidos de Git
 ```
 
 La lógica de simulación, datos, red, lenguaje, sentimiento, visualización y
-persistencia se implementará en módulos separados conforme avance el plan.
+persistencia se mantiene en módulos separados conforme avanza el plan.
 
 ## Variables de entorno y resultados
 
@@ -153,5 +155,22 @@ El proveedor `MockLanguageModelProvider` produce texto breve en español y
 `MockSentimentAnalyzer` devuelve una valencia neutral fija. Son componentes
 deterministas para pilotos sin internet; `utterance_max_words` se configura en
 `configs/base.yaml`. Una simulación mínima de 20 agentes y una semana se comprueba
-con `pytest tests/smoke/test_mock_week.py`. La persistencia de ejecuciones se
-implementará en la Fase 9.
+con `pytest tests/smoke/test_mock_week.py`.
+
+## Persistencia y trazabilidad
+
+`make_run_metadata(...)` registra identificador, semilla, escenario, revisión Git,
+versiones de Python y dependencias, modelo, versión del prompt y versiones de
+los datos. Las fechas de inicio y fin se suministran explícitamente.
+`save_run(output_root, config=..., agents=..., interactions=..., metadata=...)`
+escribe `config.json`, `run_metadata.json`, `agents.parquet`,
+`interactions.parquet` y `relationships.parquet` bajo `output_root/run_id`.
+`config.json` conserva todos los parámetros operacionales; la semilla y las
+versiones de datos están en `run_metadata.json`. El guardado rechaza un
+`run_id` existente para evitar sobrescribir resultados.
+
+`load_run(path)` reconstruye los modelos tipados y verifica que la tabla de
+vínculos dirigidos coincida con los agentes. Solo se guardan vínculos que ya
+aparecen explícitamente en el estado de los agentes; los demás conservan el
+valor inicial definido por la configuración. Los intereses, orientaciones y
+asignaciones se codifican como JSON dentro de Parquet para preservar su tipo.
