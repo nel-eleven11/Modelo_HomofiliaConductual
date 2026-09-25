@@ -8,7 +8,8 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 9: persistencia de ejecuciones en JSON y Parquet, con trazabilidad de
+Fase 10: red dirigida dinámica con NetworkX, métricas y snapshots independientes.
+La Fase 9 añadió persistencia de ejecuciones en JSON y Parquet, con trazabilidad de
 semilla, revisión Git, versiones de software y recursos del modelo.
 La Fase 8 añadió un motor de conversaciones reproducible con lenguaje y sentimiento
 simulados. Cada clase de cada sección produce un evento de conversación.
@@ -174,3 +175,21 @@ vínculos dirigidos coincida con los agentes. Solo se guardan vínculos que ya
 aparecen explícitamente en el estado de los agentes; los demás conservan el
 valor inicial definido por la configuración. Los intereses, orientaciones y
 asignaciones se codifican como JSON dentro de Parquet para preservar su tipo.
+
+## Red social
+
+`build_graph(agents, interactions)` crea un `networkx.DiGraph` con un nodo por
+estudiante. Una arista `i → j` representa el vínculo que `i` percibe hacia `j`;
+su peso es `R_ij`. Solo los vínculos explícitos crean aristas. Cada registro
+dirigido incrementa `interaction_count` y actualiza `last_interaction` en la
+arista del receptor hacia el emisor. `capture_snapshot(...)` construye un grafo
+nuevo para `semester_end`, `year_end` o `final`, sin compartir sus aristas con
+snapshots anteriores.
+
+`compute_metrics(graph, agents, config)` calcula densidad, grados, fuerzas
+ponderadas, reciprocidad, aislados, componentes débiles y fuertes,
+assortatividad por sexo y procedencia, similitud media de extremos y
+distribución de pesos. Para clustering, comunidades y modularidad construye
+una proyección no dirigida: basta una arista en cualquier dirección y esas
+tres métricas usan aristas sin peso. Métricas indefinidas por ausencia de
+aristas o variación se representan con `None`.

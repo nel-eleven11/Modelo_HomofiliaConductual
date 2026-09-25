@@ -7,6 +7,8 @@ from homophily_sim.data.demographics import load_demographic_profile
 from homophily_sim.data.population import generate_population
 from homophily_sim.data.topics import load_topics
 from homophily_sim.llm.mock import MockLanguageModelProvider
+from homophily_sim.network.builder import build_graph
+from homophily_sim.network.metrics import compute_metrics
 from homophily_sim.nlp.mock import MockSentimentAnalyzer
 from homophily_sim.simulation.calendar import generate_academic_calendar
 from homophily_sim.simulation.conversation import simulate_week
@@ -24,9 +26,21 @@ def test_twenty_students_one_week_without_external_services() -> None:
     schedule = generate_academic_calendar(config, run_seed=42)[0]
     sections = enroll_semester(students, schedule, config, run_seed=42)
     events = simulate_week(
-        students, schedule, sections, bank, config, run_seed=42, week=1,
-        run_id="smoke", language_model=MockLanguageModelProvider(),
+        students,
+        schedule,
+        sections,
+        bank,
+        config,
+        run_seed=42,
+        week=1,
+        run_id="smoke",
+        language_model=MockLanguageModelProvider(),
         sentiment_analyzer=MockSentimentAnalyzer(),
     )
     assert len(events) == 36
     assert sum(len(event.records) for event in events) >= 72
+    graph = build_graph(students, [record for event in events for record in event.records])
+    metrics = compute_metrics(graph, students, config)
+    assert graph.number_of_nodes() == 20
+    assert graph.number_of_edges() > 0
+    assert 0 < metrics.density <= 1
