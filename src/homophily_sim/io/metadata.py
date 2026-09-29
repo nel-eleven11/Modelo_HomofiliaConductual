@@ -52,7 +52,10 @@ def current_git_commit() -> str:
 def software_versions() -> dict[str, str]:
     """Record versions used to create and read output tables."""
     versions = {"python": platform.python_version()}
-    for package in ("homophily-sim", "numpy", "pandas", "pydantic", "pyarrow"):
+    for package in (
+        "homophily-sim", "numpy", "pandas", "pydantic", "pyarrow",
+        "networkx", "matplotlib",
+    ):
         try:
             versions[package] = version(package)
         except PackageNotFoundError:

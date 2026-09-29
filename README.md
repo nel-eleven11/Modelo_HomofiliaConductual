@@ -8,7 +8,8 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 10: red dirigida dinámica con NetworkX, métricas y snapshots independientes.
+Fase 11: visualizaciones PNG y ejecución completa local con proveedores simulados.
+La Fase 10 añadió una red dirigida dinámica con NetworkX, métricas y snapshots independientes.
 La Fase 9 añadió persistencia de ejecuciones en JSON y Parquet, con trazabilidad de
 semilla, revisión Git, versiones de software y recursos del modelo.
 La Fase 8 añadió un motor de conversaciones reproducible con lenguaje y sentimiento
@@ -88,7 +89,7 @@ puede copiarse a `.env` y configurarse localmente; la Fase 0 no necesita una API
 Los resultados del MVP que ya estaban versionados no quedan excluidos
 retroactivamente: su eliminación previa en el árbol de trabajo queda fuera del
 commit de la Fase 0.
-Gemini, Mesa, NetworkX, matplotlib y transformers se incorporarán en sus fases.
+Gemini, Mesa y transformers se incorporarán en sus fases.
 
 ## Configuración
 
@@ -193,3 +194,29 @@ distribución de pesos. Para clustering, comunidades y modularidad construye
 una proyección no dirigida: basta una arista en cualquier dirección y esas
 tres métricas usan aristas sin peso. Métricas indefinidas por ausencia de
 aristas o variación se representan con `None`.
+
+## Informe visual con mocks
+
+Desde la raíz del repositorio, el piloto reducido ejecuta 20 agentes, dos
+semestres y una semana por semestre sin llamadas externas:
+
+```bash
+python -m homophily_sim.experiments.mock_mvp --smoke
+```
+
+Sin `--smoke`, el comando usa la configuración completa de 80 agentes, diez
+semestres y veinte semanas por semestre. `--seed`, `--run-id`, `--config` y
+`--output` permiten controlar la ejecución. Cada `run_id` debe ser nuevo;
+los resultados quedan en `outputs/<run_id>/` junto con las tablas y metadatos
+de la Fase 9. Además de `metrics_by_semester.json`, el informe produce:
+
+```text
+network_semester_01.png    network_semester_10.png    network_final.png
+density_over_time.png     assortativity_over_time.png
+modularity_over_time.png  relationship_distribution.png
+```
+
+El piloto reducido nombra su última red `network_semester_02.png`. Las redes
+comparten posiciones calculadas con la semilla y la red final. Las figuras
+usan Matplotlib sin depender de una pantalla; las salidas generadas no se
+versionan.
