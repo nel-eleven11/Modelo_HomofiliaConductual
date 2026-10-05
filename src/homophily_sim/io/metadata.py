@@ -55,6 +55,7 @@ def software_versions() -> dict[str, str]:
     for package in (
         "homophily-sim", "numpy", "pandas", "pydantic", "pyarrow",
         "networkx", "matplotlib",
+        "mesa",
     ):
         try:
             versions[package] = version(package)

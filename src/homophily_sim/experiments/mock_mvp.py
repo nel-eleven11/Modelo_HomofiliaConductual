@@ -8,18 +8,12 @@ from pathlib import Path
 
 from homophily_sim.config import SimulationConfig, load_config
 from homophily_sim.data.demographics import load_demographic_profile
-from homophily_sim.data.population import generate_population
 from homophily_sim.data.topics import load_topics
-from homophily_sim.domain.interaction import InteractionRecord
 from homophily_sim.io.metadata import make_run_metadata
 from homophily_sim.io.results import save_run
 from homophily_sim.llm.mock import MockLanguageModelProvider
-from homophily_sim.network.metrics import NetworkMetrics, compute_metrics
-from homophily_sim.network.snapshots import NetworkSnapshot, capture_snapshot
 from homophily_sim.nlp.mock import MockSentimentAnalyzer
-from homophily_sim.simulation.calendar import generate_academic_calendar
-from homophily_sim.simulation.conversation import simulate_week
-from homophily_sim.simulation.enrollment import enroll_semester
+from homophily_sim.simulation.model import HomophilyModel
 from homophily_sim.visualization.metric_plots import (
     plot_metric_trends,
     plot_relationship_distribution,
@@ -57,47 +51,21 @@ def run_mock_mvp(
         config = _smoke_config(config)
     bank = load_topics(topic_path)
     profile = load_demographic_profile(demographic_path, config.demographic_profile)
-    students = generate_population(config, bank, profile, seed)
-    calendar = generate_academic_calendar(config, seed)
-    language_model = MockLanguageModelProvider()
-    sentiment_analyzer = MockSentimentAnalyzer()
-    interactions: list[InteractionRecord] = []
-    snapshots: list[NetworkSnapshot] = []
-    series: list[tuple[int, NetworkMetrics]] = []
-
-    for schedule in calendar:
-        sections = enroll_semester(students, schedule, config, seed)
-        for week in range(1, config.weeks_per_semester + 1):
-            events = simulate_week(
-                students,
-                schedule,
-                sections,
-                bank,
-                config,
-                seed,
-                week,
-                run_id,
-                language_model,
-                sentiment_analyzer,
-            )
-            interactions.extend(record for event in events for record in event.records)
-        snapshot = capture_snapshot(
-            students,
-            interactions,
-            kind="semester_end",
-            semester=schedule.semester,
-            total_semesters=config.semesters,
-        )
-        snapshots.append(snapshot)
-        series.append((schedule.semester, compute_metrics(snapshot.graph, students, config)))
-
-    final = capture_snapshot(
-        students,
-        interactions,
-        kind="final",
-        semester=config.semesters,
-        total_semesters=config.semesters,
+    model = HomophilyModel(
+        config,
+        bank,
+        profile,
+        run_seed=seed,
+        run_id=run_id,
+        language_model=MockLanguageModelProvider(),
+        sentiment_analyzer=MockSentimentAnalyzer(),
     )
+    model.run_to_completion()
+    final = model.final_snapshot
+    if final is None:
+        raise RuntimeError("completed Mesa run has no final snapshot")
+    students = model.students
+    series = model.metric_history
     metadata = make_run_metadata(
         config,
         run_id=run_id,
@@ -113,7 +81,7 @@ def run_mock_mvp(
         output_root,
         config=config,
         agents=students,
-        interactions=interactions,
+        interactions=model.interactions,
         metadata=metadata,
     )
     (destination / "metrics_by_semester.json").write_text(
@@ -126,9 +94,9 @@ def run_mock_mvp(
         encoding="utf-8",
     )
     positions = network_layout(final.graph, seed)
-    plot_network(snapshots[0], destination / "network_semester_01.png", positions=positions)
+    plot_network(model.snapshots[0], destination / "network_semester_01.png", positions=positions)
     plot_network(
-        snapshots[-1],
+        model.snapshots[-1],
         destination / f"network_semester_{config.semesters:02d}.png",
         positions=positions,
     )

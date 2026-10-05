@@ -1,6 +1,7 @@
 numpy
 networkx
 matplotlib
+mesa
 pandas
 pyarrow
 scipy
