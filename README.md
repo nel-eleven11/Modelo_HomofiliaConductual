@@ -8,7 +8,8 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 12: integración del flujo semanal en un modelo de Mesa.
+Fase 13: generación lingüística opcional con Gemini 2.5 Flash-Lite y caché SQLite.
+La Fase 12 integró el flujo semanal en un modelo de Mesa.
 La Fase 11 añadió visualizaciones PNG y ejecución completa local con proveedores simulados.
 La Fase 10 añadió una red dirigida dinámica con NetworkX, métricas y snapshots independientes.
 La Fase 9 añadió persistencia de ejecuciones en JSON y Parquet, con trazabilidad de
@@ -83,14 +84,15 @@ persistencia se mantiene en módulos separados conforme avanza el plan.
 
 ## Variables de entorno y resultados
 
-`.env.example` documenta las variables previstas. Para una futura integración,
-puede copiarse a `.env` y configurarse localmente; la Fase 0 no necesita una API key.
+`.env.example` documenta `GEMINI_API_KEY`, `GEMINI_MODEL` y la ruta de caché.
+Puede copiarse a `.env` y configurarse localmente para usar Gemini; los pilotos
+con mocks no necesitan una API key.
 `.env`, sus variantes locales, el entorno virtual, las cachés y los resultados en
 `outputs/` nuevos están excluidos de Git; `outputs/.gitkeep` conserva la carpeta.
 Los resultados del MVP que ya estaban versionados no quedan excluidos
 retroactivamente: su eliminación previa en el árbol de trabajo queda fuera del
 commit de la Fase 0.
-Gemini y transformers se incorporarán en sus fases.
+El clasificador de sentimiento con `transformers` se incorporará en su fase.
 
 ## Configuración
 
@@ -229,3 +231,35 @@ El piloto reducido nombra su última red `network_semester_02.png`. Las redes
 comparten posiciones calculadas con la semilla y la red final. Las figuras
 usan Matplotlib sin depender de una pantalla; las salidas generadas no se
 versionan.
+
+## Generación opcional con Gemini
+
+`GeminiLanguageModelProvider` implementa la misma interfaz que el proveedor
+mock. Lee `GEMINI_API_KEY` y, por defecto, usa `gemini-2.5-flash-lite`.
+El prompt versionado `student-spanish-v1` transmite solo el tema, la
+orientación temática, intereses relevantes, extroversión para el estilo y
+mensaje previo. Gemini escribe el texto; la simulación conserva el control
+de probabilidades, relaciones y estados. La temperatura inicial es `0.3`,
+el límite es 128 tokens de salida y el texto se recorta a `max_words`.
+
+La caché SQLite en `outputs/llm_cache.sqlite3` evita llamadas duplicadas y
+puede configurarse con `HOMOPHILY_LLM_CACHE_PATH`. Su clave incorpora el modelo,
+la versión del prompt, el agente, tema, orientación, contexto previo, semilla
+y parámetros de generación. El cliente usa timeout y reintentos para errores
+transitorios, incluidos límites de tasa. Sin clave o respuesta válida, informa
+el error; los tests usan un cliente simulado y no contactan la API.
+
+Después de configurar la clave, el piloto manual realiza cinco solicitudes
+reales y permite hasta diez con `--count`:
+
+```bash
+python -m homophily_sim.experiments.gemini_pilot --count 5
+```
+
+Para sustituir el lenguaje mock dentro del modelo Mesa y generar el mismo
+informe visual, añada `--gemini` al comando `mock_mvp`; el sentimiento sigue
+siendo simulado hasta la Fase 14:
+
+```bash
+python -m homophily_sim.experiments.mock_mvp --smoke --gemini
+```

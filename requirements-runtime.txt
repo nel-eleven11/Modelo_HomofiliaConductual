@@ -2,6 +2,8 @@ numpy
 networkx
 matplotlib
 mesa
+google-genai
+httpx
 pandas
 pyarrow
 scipy

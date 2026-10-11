@@ -26,6 +26,7 @@ class RunMetadata(BaseModel):
     topic_bank_version: str
     demographic_calibration_version: str
     model_name: str
+    language_settings: dict[str, str | int | float] = Field(default_factory=dict)
     start_time: datetime
     end_time: datetime
 
@@ -53,9 +54,15 @@ def software_versions() -> dict[str, str]:
     """Record versions used to create and read output tables."""
     versions = {"python": platform.python_version()}
     for package in (
-        "homophily-sim", "numpy", "pandas", "pydantic", "pyarrow",
-        "networkx", "matplotlib",
+        "homophily-sim",
+        "numpy",
+        "pandas",
+        "pydantic",
+        "pyarrow",
+        "networkx",
+        "matplotlib",
         "mesa",
+        "google-genai",
     ):
         try:
             versions[package] = version(package)
@@ -73,6 +80,7 @@ def make_run_metadata(
     topic_bank_version: str,
     demographic_calibration_version: str,
     model_name: str,
+    language_settings: dict[str, str | int | float] | None = None,
     start_time: datetime,
     end_time: datetime,
 ) -> RunMetadata:
@@ -87,6 +95,7 @@ def make_run_metadata(
         topic_bank_version=topic_bank_version,
         demographic_calibration_version=demographic_calibration_version,
         model_name=model_name,
+        language_settings=language_settings or {},
         start_time=start_time,
         end_time=end_time,
     )
