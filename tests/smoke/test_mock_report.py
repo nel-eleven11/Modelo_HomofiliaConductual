@@ -59,7 +59,7 @@ def test_gemini_provider_runs_mesa_report_with_mocked_sdk(tmp_path: Path) -> Non
         language_model=provider,
     )
     restored = load_run(destination)
-    assert restored.metadata.model_name == "gemini-2.5-flash-lite"
+    assert restored.metadata.model_name == "gemini-3.5-flash-lite"
     assert restored.metadata.prompt_version == "student-spanish-v1"
     assert restored.metadata.language_settings["generation_seed"] == 42
     assert restored.interactions

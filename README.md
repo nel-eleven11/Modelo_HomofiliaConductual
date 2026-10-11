@@ -235,7 +235,11 @@ versionan.
 ## Generación opcional con Gemini
 
 `GeminiLanguageModelProvider` implementa la misma interfaz que el proveedor
-mock. Lee `GEMINI_API_KEY` y, por defecto, usa `gemini-2.5-flash-lite`.
+mock. Lee `GEMINI_API_KEY` y, por defecto, usa `gemini-3.5-flash-lite`.
+El modelo previsto originalmente, `gemini-2.5-flash-lite`, ya no está
+disponible para proyectos nuevos; por eso se cambió el valor predeterminado
+sin modificar las reglas sociales. Si `.env` contiene `GEMINI_MODEL`, actualice
+esa línea: su valor tiene prioridad sobre el predeterminado del código.
 El prompt versionado `student-spanish-v1` transmite solo el tema, la
 orientación temática, intereses relevantes, extroversión para el estilo y
 mensaje previo. Gemini escribe el texto; la simulación conserva el control

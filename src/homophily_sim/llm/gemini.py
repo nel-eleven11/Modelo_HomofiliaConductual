@@ -43,7 +43,7 @@ class GeminiLanguageModelProvider:
     ) -> None:
         load_dotenv()
         self.model_name = (
-            model if model is not None else (os.getenv("GEMINI_MODEL") or "gemini-2.5-flash-lite")
+            model if model is not None else (os.getenv("GEMINI_MODEL") or "gemini-3.5-flash-lite")
         )
         if not self.model_name.strip():
             raise ValueError("Gemini model name cannot be empty")
@@ -116,6 +116,11 @@ class GeminiLanguageModelProvider:
                 return cached
             if exc.code == 429:
                 raise GeminiRateLimitError("Gemini rate limit exhausted after retries") from exc
+            if exc.code == 404:
+                raise LanguageGenerationError(
+                    f"Gemini model {self.model_name} is unavailable (404). "
+                    "Check access or set GEMINI_MODEL=gemini-3.5-flash-lite in .env"
+                ) from exc
             raise LanguageGenerationError(f"Gemini request failed with status {exc.code}") from exc
         except (httpx.TimeoutException, httpx.TransportError, TimeoutError) as exc:
             if cached is not None:

@@ -13,6 +13,7 @@ from homophily_sim.llm.gemini import (
     EmptyGeminiResponseError,
     GeminiLanguageModelProvider,
     GeminiRateLimitError,
+    LanguageGenerationError,
 )
 from homophily_sim.llm.prompts import PROMPT_VERSION, SYSTEM_INSTRUCTION, build_prompt
 
@@ -126,3 +127,28 @@ def test_sdk_client_receives_timeout_and_exponential_retry_policy(tmp_path: Path
     assert options.retry_options.attempts == 3
     assert options.retry_options.exp_base == 2.0
     assert 429 in options.retry_options.http_status_codes
+
+
+def test_default_model_uses_available_flash_lite(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GEMINI_MODEL", "")
+    client = Mock()
+    client.models.generate_content.return_value = SimpleNamespace(text="Una opinión breve.")
+    provider = GeminiLanguageModelProvider(
+        client=client, cache=SqliteUtteranceCache(tmp_path / "cache.sqlite3")
+    )
+
+    assert provider.generate_utterance(_request()).text == "Una opinión breve."
+    assert client.models.generate_content.call_args.kwargs["model"] == "gemini-3.5-flash-lite"
+
+
+def test_unavailable_model_error_includes_configuration_hint(tmp_path: Path) -> None:
+    client = Mock()
+    client.models.generate_content.side_effect = errors.APIError(
+        404, {"message": "model unavailable"}
+    )
+    provider = _provider(tmp_path, client)
+
+    with pytest.raises(LanguageGenerationError, match="GEMINI_MODEL=gemini-3.5-flash-lite"):
+        provider.generate_utterance(_request())
