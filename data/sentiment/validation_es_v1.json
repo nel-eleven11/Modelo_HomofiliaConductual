@@ -1,0 +1,11 @@
+[
+  {"text": "Me encanta aprender nuevos lenguajes de programación.", "label": "positive"},
+  {"text": "Estoy feliz de colaborar con mi grupo en este proyecto.", "label": "positive"},
+  {"text": "Fue una experiencia excelente y muy divertida.", "label": "positive"},
+  {"text": "Mañana tenemos clase de algoritmos a las ocho.", "label": "neutral"},
+  {"text": "El curso tiene dos sesiones por semana.", "label": "neutral"},
+  {"text": "Hoy entregamos el informe del laboratorio.", "label": "neutral"},
+  {"text": "Odio cuando la aplicación se cierra sin guardar mi trabajo.", "label": "negative"},
+  {"text": "Me frustró mucho perder el proyecto por un error.", "label": "negative"},
+  {"text": "La reunión fue terrible y salí muy decepcionado.", "label": "negative"}
+]

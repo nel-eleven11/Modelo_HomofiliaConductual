@@ -9,6 +9,7 @@ from homophily_sim.experiments.mock_mvp import run_mock_mvp
 from homophily_sim.io.results import load_run
 from homophily_sim.llm.cache import SqliteUtteranceCache
 from homophily_sim.llm.gemini import GeminiLanguageModelProvider
+from homophily_sim.nlp.sentiment import TransformersSentimentAnalyzer
 
 
 def test_mock_report_writes_complete_visual_output(tmp_path: Path) -> None:
@@ -65,3 +66,29 @@ def test_gemini_provider_runs_mesa_report_with_mocked_sdk(tmp_path: Path) -> Non
     assert restored.interactions
     assert provider.api_calls > 0
     assert client.models.generate_content.call_count == provider.api_calls
+
+
+def test_local_sentiment_is_used_and_recorded(tmp_path: Path) -> None:
+    root = Path(__file__).resolve().parents[2]
+
+    def classifier(text: str, *, top_k: None, truncation: bool) -> list[dict[str, object]]:
+        return [
+            {"label": "negative", "score": 0.0},
+            {"label": "neutral", "score": 0.0},
+            {"label": "positive", "score": 1.0},
+        ]
+
+    analyzer = TransformersSentimentAnalyzer(classifier=classifier)
+    destination = run_mock_mvp(
+        config_path=root / "configs/homophily_medium.yaml",
+        topic_path=root / "data/topics/topics_v1.yaml",
+        demographic_path=root / "data/demographics/profiles_v1.yaml",
+        output_root=tmp_path,
+        run_id="phase14-local-sentiment",
+        seed=42,
+        smoke=True,
+        sentiment_analyzer=analyzer,
+    )
+    restored = load_run(destination)
+    assert restored.metadata.sentiment_model_name == analyzer.model_name
+    assert {record.sentiment_valence for record in restored.interactions} == {1.0}

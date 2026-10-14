@@ -15,7 +15,9 @@ from homophily_sim.llm.base import LanguageModelProvider
 from homophily_sim.llm.gemini import GeminiLanguageModelProvider
 from homophily_sim.llm.mock import MockLanguageModelProvider
 from homophily_sim.llm.prompts import PROMPT_VERSION
+from homophily_sim.nlp.base import SentimentAnalyzer
 from homophily_sim.nlp.mock import MockSentimentAnalyzer
+from homophily_sim.nlp.sentiment import TransformersSentimentAnalyzer
 from homophily_sim.simulation.model import HomophilyModel
 from homophily_sim.visualization.metric_plots import (
     plot_metric_trends,
@@ -47,8 +49,9 @@ def run_mock_mvp(
     seed: int,
     smoke: bool = False,
     language_model: LanguageModelProvider | None = None,
+    sentiment_analyzer: SentimentAnalyzer | None = None,
 ) -> Path:
-    """Simulate, persist and render one run with an injected language provider."""
+    """Simulate, persist and render one run with injectable language and sentiment."""
     started = datetime.now(UTC)
     config = load_config(config_path)
     if smoke:
@@ -56,6 +59,7 @@ def run_mock_mvp(
     bank = load_topics(topic_path)
     profile = load_demographic_profile(demographic_path, config.demographic_profile)
     provider = language_model or MockLanguageModelProvider()
+    sentiment = sentiment_analyzer or MockSentimentAnalyzer()
     model = HomophilyModel(
         config,
         bank,
@@ -63,7 +67,7 @@ def run_mock_mvp(
         run_seed=seed,
         run_id=run_id,
         language_model=provider,
-        sentiment_analyzer=MockSentimentAnalyzer(),
+        sentiment_analyzer=sentiment,
     )
     model.run_to_completion()
     final = model.final_snapshot
@@ -80,6 +84,9 @@ def run_mock_mvp(
         topic_bank_version=bank.topic_bank_version,
         demographic_calibration_version=profile.version,
         model_name=gemini.model_name if gemini is not None else "mock",
+        sentiment_model_name=(
+            sentiment.model_name if isinstance(sentiment, TransformersSentimentAnalyzer) else "mock"
+        ),
         language_settings={
             "temperature": gemini.temperature,
             "max_output_tokens": gemini.max_output_tokens,
@@ -135,6 +142,9 @@ def main() -> None:
     parser.add_argument("--run-id", type=str)
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--gemini", action="store_true", help="Use Gemini for language generation")
+    parser.add_argument(
+        "--sentiment", action="store_true", help="Use a local multilingual sentiment classifier"
+    )
     args = parser.parse_args()
     provider = GeminiLanguageModelProvider(generation_seed=args.seed) if args.gemini else None
     prefix = "gemini" if provider is not None else "mock"
@@ -148,6 +158,7 @@ def main() -> None:
         seed=args.seed,
         smoke=args.smoke,
         language_model=provider,
+        sentiment_analyzer=TransformersSentimentAnalyzer() if args.sentiment else None,
     )
     print(destination)
 

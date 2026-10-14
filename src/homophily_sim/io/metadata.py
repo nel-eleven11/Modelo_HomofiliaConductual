@@ -26,6 +26,7 @@ class RunMetadata(BaseModel):
     topic_bank_version: str
     demographic_calibration_version: str
     model_name: str
+    sentiment_model_name: str = "mock"
     language_settings: dict[str, str | int | float] = Field(default_factory=dict)
     start_time: datetime
     end_time: datetime
@@ -63,6 +64,10 @@ def software_versions() -> dict[str, str]:
         "matplotlib",
         "mesa",
         "google-genai",
+        "transformers",
+        "torch",
+        "sentencepiece",
+        "protobuf",
     ):
         try:
             versions[package] = version(package)
@@ -80,6 +85,7 @@ def make_run_metadata(
     topic_bank_version: str,
     demographic_calibration_version: str,
     model_name: str,
+    sentiment_model_name: str = "mock",
     language_settings: dict[str, str | int | float] | None = None,
     start_time: datetime,
     end_time: datetime,
@@ -95,6 +101,7 @@ def make_run_metadata(
         topic_bank_version=topic_bank_version,
         demographic_calibration_version=demographic_calibration_version,
         model_name=model_name,
+        sentiment_model_name=sentiment_model_name,
         language_settings=language_settings or {},
         start_time=start_time,
         end_time=end_time,

@@ -8,7 +8,9 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
-Fase 13: generación lingüística opcional con Gemini 2.5 Flash-Lite y caché SQLite.
+Fase 14: clasificador multilingüe local de sentimiento, opcional y validado con
+un conjunto pequeño de frases españolas etiquetadas manualmente.
+La Fase 13 añadió generación lingüística opcional con Gemini 3.5 Flash-Lite y caché SQLite.
 La Fase 12 integró el flujo semanal en un modelo de Mesa.
 La Fase 11 añadió visualizaciones PNG y ejecución completa local con proveedores simulados.
 La Fase 10 añadió una red dirigida dinámica con NetworkX, métricas y snapshots independientes.
@@ -49,6 +51,15 @@ instala también el proyecto y `requirements-dev.txt` agrega las herramientas de
 Ambos usan `constraints.txt` para fijar las versiones directas y transitivas
 verificadas en Linux x86_64 con CPython 3.14.2. Otros sistemas no se han validado;
 las herramientas de construcción se resuelven por separado durante la instalación.
+Para usar el analizador local de sentimiento, instale además `requirements-nlp.txt`.
+En Linux, la variante de PyTorch para CPU evita descargar bibliotecas de GPU:
+
+```bash
+python -m pip install 'torch==2.14.1+cpu' --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -r requirements-nlp.txt
+```
+
+El resto del proyecto puede ejecutarse sin esas dependencias opcionales.
 
 ## Verificación
 
@@ -92,7 +103,8 @@ con mocks no necesitan una API key.
 Los resultados del MVP que ya estaban versionados no quedan excluidos
 retroactivamente: su eliminación previa en el árbol de trabajo queda fuera del
 commit de la Fase 0.
-El clasificador de sentimiento con `transformers` se incorporará en su fase.
+El clasificador local de la Fase 14 se activa explícitamente; las ejecuciones
+rápidas y los tests conservan el analizador simulado.
 
 ## Configuración
 
@@ -161,6 +173,34 @@ El proveedor `MockLanguageModelProvider` produce texto breve en español y
 deterministas para pilotos sin internet; `utterance_max_words` se configura en
 `configs/base.yaml`. Una simulación mínima de 20 agentes y una semana se comprueba
 con `pytest tests/smoke/test_mock_week.py`.
+
+## Sentimiento local
+
+`TransformersSentimentAnalyzer` usa por defecto
+`cardiffnlp/twitter-xlm-roberta-base-sentiment` para obtener probabilidades
+`negative`, `neutral` y `positive`. El modelo se ejecuta localmente con PyTorch;
+la primera carga descarga sus pesos y las siguientes usan la caché de Hugging Face.
+Las probabilidades se normalizan y la valencia sigue siendo
+`p_positive + 0.5 * p_neutral`. La simulación registra el nombre del clasificador
+en `run_metadata.json` y las versiones de `torch` y `transformers`.
+
+Para inspeccionar su desempeño en nueve frases españolas etiquetadas a mano:
+
+```bash
+python -m homophily_sim.experiments.sentiment_pilot
+```
+
+El fixture está en `data/sentiment/validation_es_v1.json`. En la ejecución local
+inicial coincidió con 9/9 etiquetas; este conjunto pequeño no estima precisión
+general ni garantiza que interprete correctamente conversaciones universitarias.
+El modelo fue entrenado con lenguaje de redes sociales y sus errores pueden
+alterar la valencia. Para usarlo en el piloto del modelo Mesa:
+
+```bash
+python -m homophily_sim.experiments.mock_mvp --smoke --sentiment
+```
+
+`--gemini` y `--sentiment` pueden activarse por separado.
 
 ## Persistencia y trazabilidad
 
