@@ -202,6 +202,26 @@ python -m homophily_sim.experiments.mock_mvp --smoke --sentiment
 
 `--gemini` y `--sentiment` pueden activarse por separado.
 
+## Piloto 1 y archivos para presentación
+
+La Fase 15 ejecuta el escenario medio con 20 agentes, una semana del primer
+semestre y una del segundo, semilla 42, lenguaje simulado y sentimiento local.
+Ejecutar desde la raíz del repositorio:
+
+```bash
+python -m homophily_sim.experiments.pilot_1 --run-id pilot-1-medium-seed-42-final
+```
+
+Los resultados de la ejecución final se guardan en
+`outputs/pilot-1-medium-seed-42-final/`. Los archivos
+`pilot_1_summary.json`, `pilot_1_network_metrics.csv` y `pilot_1_report.md`
+concentran las métricas; `pilot_1_conversations.csv` guarda exposiciones y
+respuestas por conversación; `metrics_by_semester.json`, las tablas Parquet y los PNG
+conservan el detalle y las figuras. El [resumen del Piloto 1](docs/pilots/pilot_1.md)
+registra las cifras principales dentro de Git. La carpeta `outputs/` permanece
+excluida de Git y debe conservarse o copiarse si se necesitan las tablas y
+gráficos originales para la presentación.
+
 ## Persistencia y trazabilidad
 
 `make_run_metadata(...)` registra identificador, semilla, escenario, revisión Git,

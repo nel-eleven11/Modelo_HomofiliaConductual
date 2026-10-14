@@ -2,6 +2,7 @@
 
 import argparse
 import json
+from collections.abc import Callable
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
@@ -18,6 +19,7 @@ from homophily_sim.llm.prompts import PROMPT_VERSION
 from homophily_sim.nlp.base import SentimentAnalyzer
 from homophily_sim.nlp.mock import MockSentimentAnalyzer
 from homophily_sim.nlp.sentiment import TransformersSentimentAnalyzer
+from homophily_sim.simulation.conversation import ConversationEvent
 from homophily_sim.simulation.model import HomophilyModel
 from homophily_sim.visualization.metric_plots import (
     plot_metric_trends,
@@ -50,6 +52,7 @@ def run_mock_mvp(
     smoke: bool = False,
     language_model: LanguageModelProvider | None = None,
     sentiment_analyzer: SentimentAnalyzer | None = None,
+    event_observer: Callable[[list[ConversationEvent]], None] | None = None,
 ) -> Path:
     """Simulate, persist and render one run with injectable language and sentiment."""
     started = datetime.now(UTC)
@@ -69,7 +72,12 @@ def run_mock_mvp(
         language_model=provider,
         sentiment_analyzer=sentiment,
     )
-    model.run_to_completion()
+    if event_observer is None:
+        model.run_to_completion()
+    else:
+        while model.running:
+            model.step()
+            event_observer(model.last_events)
     final = model.final_snapshot
     if final is None:
         raise RuntimeError("completed Mesa run has no final snapshot")
