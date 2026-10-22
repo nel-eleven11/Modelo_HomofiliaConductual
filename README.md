@@ -8,6 +8,9 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
+Fase 21: tablas y figuras finales para tesis a partir de los experimentos
+guardados. La fase 20 de validación interna queda en espera. Consulte
+[artefactos de tesis](docs/experiments/phase_21_thesis.md).
 Fase 19: sensibilidad local de siete parámetros, uno por vez, en los tres
 escenarios de homofilia. Consulte [análisis de sensibilidad](docs/experiments/phase_19_sensitivity.md).
 Fase 18: comparación pareada de homofilia baja, media y alta con 30 semillas
@@ -432,3 +435,17 @@ El informe de [fase 19](docs/experiments/phase_19_sensitivity.md) recoge el
 diseño, las cifras principales y las limitaciones. Las 225 corridas completas
 quedan en `outputs/phase-19-sensitivity/runs/`; el archivo
 `outputs/phase-19-sensitivity-summary.zip` reúne los agregados y las figuras.
+
+## Tablas y figuras finales
+
+Con las salidas completas de las fases 18 y 19 disponibles:
+
+```bash
+python scripts/generate_phase21.py
+```
+
+Se crean `outputs/phase-21-thesis/` y su ZIP con tablas CSV, figuras PNG/PDF
+y un manifiesto de fuentes. Las redes dibujadas muestran hasta tres vínculos
+fuertes por agente; sus métricas se calculan con la red completa. Consulte
+el [informe de fase 21](docs/experiments/phase_21_thesis.md) para las
+definiciones, resultados y el estado pendiente de la fase 20.

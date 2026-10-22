@@ -73,6 +73,7 @@ def render(source: Path, output: Path) -> None:
         )
         figure.tight_layout(rect=(0, 0, 1, 0.94))
         figure.savefig(output / filename)
+        figure.savefig(output / filename.replace(".png", ".pdf"))
 
 
 def main() -> None:
