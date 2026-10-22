@@ -8,6 +8,10 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
+Fase 16: piloto de 80 agentes y 20 semanas, con métricas guardadas y una muestra
+independiente de Gemini. Fase 15: primer piloto pequeño con resultados conservados
+para presentación. Consulte [Piloto 2](docs/pilots/pilot_2.md) y
+[Piloto 1](docs/pilots/pilot_1.md).
 Fase 14: clasificador multilingüe local de sentimiento, opcional y validado con
 un conjunto pequeño de frases españolas etiquetadas manualmente.
 La Fase 13 añadió generación lingüística opcional con Gemini 3.5 Flash-Lite y caché SQLite.
