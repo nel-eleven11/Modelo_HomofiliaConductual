@@ -8,6 +8,9 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
+Fase 18: comparación pareada de homofilia baja, media y alta con 30 semillas
+compartidas y métricas agregadas por semestre. Consulte
+[experimento de escenarios](docs/experiments/phase_18_scenarios.md).
 Fase 17: piloto longitudinal de los 10 semestres, con insumos congelados,
 instantáneas persistidas y verificación de reproducibilidad por repetición.
 Consulte [Piloto longitudinal](docs/pilots/pilot_3_longitudinal.md).
@@ -374,3 +377,20 @@ insumos, las tablas finales, los 10 cierres semestrales, los 5 anuales y el
 final. Repite la corrida con la misma semilla y compara huellas del estado de
 agentes, interacciones e instantáneas. Usa proveedores simulados, sin llamadas
 API, para que la verificación sea reproducible en local.
+
+## Experimento de escenarios pareados
+
+Para ejecutar las 30 semillas en cada escenario de homofilia (90 corridas):
+
+```bash
+python -m homophily_sim.experiments.runner
+```
+
+El directorio `outputs/phase-18-scenarios/` guarda cada corrida con su
+configuración, metadatos, interacciones y métricas semestrales. En la raíz
+del experimento se crean `run_metrics.csv`, `scenario_summary.csv`,
+`paired_final_differences.csv`, `community_size_distribution.csv`,
+`experiment_summary.json` y `report.md`. Una nueva ejecución del mismo
+comando reanuda corridas ya guardadas si sus insumos congelados siguen
+iguales. Las comparaciones usan las mismas semillas en los tres escenarios
+y estiman intervalos descriptivos del 95 % con la distribución t.
