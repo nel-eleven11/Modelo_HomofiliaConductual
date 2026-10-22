@@ -327,3 +327,28 @@ siendo simulado hasta la Fase 14:
 ```bash
 python -m homophily_sim.experiments.mock_mvp --smoke --gemini
 ```
+# Piloto 2: 80 agentes durante un semestre
+
+Ejecute la cohorte completa durante las 20 semanas del primer semestre, con
+lenguaje y sentimiento simulados:
+
+```bash
+python -m homophily_sim.experiments.pilot_2 --run-id pilot-2-medium-seed-42
+```
+
+El directorio `outputs/pilot-2-medium-seed-42/` conserva la configuración,
+metadatos, agentes, interacciones y relaciones en Parquet; métricas semanales
+en CSV; métricas de red y resumen en JSON; y un informe Markdown con figuras.
+La configuración guardada contiene el horizonte del modelo (10 semestres),
+pero el resumen indica explícitamente el único semestre ejecutado.
+
+Para generar cinco mensajes de Gemini de agentes del piloto, con una segunda
+lectura de cada mensaje que mide los aciertos de caché, ejecute por separado:
+
+```bash
+python -m homophily_sim.experiments.pilot_2 --probe-gemini outputs/pilot-2-medium-seed-42
+```
+
+La muestra de Gemini requiere `GEMINI_API_KEY` en `.env`. Queda registrada en
+`gemini_probe.json`, junto con solicitudes API, aciertos de caché y tokens que
+informe el proveedor. No modifica el resultado de la simulación.

@@ -96,6 +96,24 @@ def test_sdk_is_mocked_and_second_call_uses_persistent_cache(tmp_path: Path) -> 
     assert kwargs["config"].max_output_tokens == 128
 
 
+def test_usage_tokens_count_only_api_responses(tmp_path: Path) -> None:
+    client = Mock()
+    client.models.generate_content.return_value = SimpleNamespace(
+        text="Una respuesta breve.",
+        usage_metadata=SimpleNamespace(
+            prompt_token_count=12, candidates_token_count=4, total_token_count=16
+        ),
+    )
+    provider = _provider(tmp_path, client)
+    provider.generate_utterance(_request())
+    provider.generate_utterance(_request())
+
+    assert provider.api_calls == 1
+    assert provider.cache_hits == 1
+    assert provider.responses_with_usage == 1
+    assert (provider.prompt_tokens, provider.output_tokens, provider.total_tokens) == (12, 4, 16)
+
+
 def test_rate_limit_empty_response_and_cached_fallback(tmp_path: Path) -> None:
     client = Mock()
     client.models.generate_content.side_effect = errors.APIError(429, {"message": "rate"})

@@ -81,6 +81,10 @@ class GeminiLanguageModelProvider:
         self.refresh_cache = refresh_cache
         self.cache_hits = 0
         self.api_calls = 0
+        self.prompt_tokens = 0
+        self.output_tokens = 0
+        self.total_tokens = 0
+        self.responses_with_usage = 0
 
     def generate_utterance(self, request: UtteranceRequest) -> UtteranceResult:
         """Return a cached wording or request one completion from the SDK."""
@@ -109,6 +113,12 @@ class GeminiLanguageModelProvider:
                     candidate_count=1,
                 ),
             )
+            usage = getattr(response, "usage_metadata", None)
+            if usage is not None:
+                self.prompt_tokens += getattr(usage, "prompt_token_count", None) or 0
+                self.output_tokens += getattr(usage, "candidates_token_count", None) or 0
+                self.total_tokens += getattr(usage, "total_token_count", None) or 0
+                self.responses_with_usage += 1
             text = " ".join((response.text or "").split())
         except errors.APIError as exc:
             if cached is not None:
