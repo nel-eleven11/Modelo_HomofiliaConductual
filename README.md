@@ -419,3 +419,16 @@ Una nueva ejecución retoma corridas ya guardadas si los insumos coinciden.
 La sensibilidad cambia un parámetro por vez. Cuando varía `w_interest`, los
 otros pesos de similitud se reescalan proporcionalmente para sumar uno; cuando
 varía `w_agreement`, `w_sentiment` toma su complemento.
+
+Para comparar la similitud de aristas cuando cambia `w_interest`, use una
+escala común con los pesos base y regenere las figuras:
+
+```bash
+python scripts/analyze_phase19_reference.py
+python scripts/plot_phase19.py
+```
+
+El informe de [fase 19](docs/experiments/phase_19_sensitivity.md) recoge el
+diseño, las cifras principales y las limitaciones. Las 225 corridas completas
+quedan en `outputs/phase-19-sensitivity/runs/`; el archivo
+`outputs/phase-19-sensitivity-summary.zip` reúne los agregados y las figuras.
