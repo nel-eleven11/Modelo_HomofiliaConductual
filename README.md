@@ -8,6 +8,9 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
+Fase 17: piloto longitudinal de los 10 semestres, con insumos congelados,
+instantáneas persistidas y verificación de reproducibilidad por repetición.
+Consulte [Piloto longitudinal](docs/pilots/pilot_3_longitudinal.md).
 Fase 16: piloto de 80 agentes y 20 semanas, con métricas guardadas y una muestra
 independiente de Gemini. Fase 15: primer piloto pequeño con resultados conservados
 para presentación. Consulte [Piloto 2](docs/pilots/pilot_2.md) y
@@ -356,3 +359,18 @@ python -m homophily_sim.experiments.pilot_2 --probe-gemini outputs/pilot-2-mediu
 La muestra de Gemini requiere `GEMINI_API_KEY` en `.env`. Queda registrada en
 `gemini_probe.json`, junto con solicitudes API, aciertos de caché y tokens que
 informe el proveedor. No modifica el resultado de la simulación.
+
+## Piloto longitudinal: 10 semestres
+
+Para completar la cohorte de 80 agentes con `h = 0.50` y semilla 42:
+
+```bash
+python -m homophily_sim.experiments.longitudinal_pilot \
+  --run-id pilot-3-longitudinal-seed-42
+```
+
+El piloto guarda la configuración y las versiones, las huellas SHA-256 de los
+insumos, las tablas finales, los 10 cierres semestrales, los 5 anuales y el
+final. Repite la corrida con la misma semilla y compara huellas del estado de
+agentes, interacciones e instantáneas. Usa proveedores simulados, sin llamadas
+API, para que la verificación sea reproducible en local.
