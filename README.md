@@ -8,6 +8,8 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 
 ## Estado
 
+Fase 19: sensibilidad local de siete parámetros, uno por vez, en los tres
+escenarios de homofilia. Consulte [análisis de sensibilidad](docs/experiments/phase_19_sensitivity.md).
 Fase 18: comparación pareada de homofilia baja, media y alta con 30 semillas
 compartidas y métricas agregadas por semestre. Consulte
 [experimento de escenarios](docs/experiments/phase_18_scenarios.md).
@@ -400,3 +402,20 @@ Para regenerar las tres figuras de trayectorias desde los agregados:
 ```bash
 python scripts/plot_phase18.py
 ```
+
+## Sensibilidad local de parámetros
+
+Para evaluar los siete parámetros previstos en `AGENTS.md`, con cinco
+semillas compartidas entre los tres escenarios de homofilia:
+
+```bash
+python -m homophily_sim.experiments.sensitivity
+```
+
+El directorio `outputs/phase-19-sensitivity/` guarda cada corrida y sus
+configuraciones, las métricas por semestre, promedios e intervalos de confianza
+y diferencias pareadas respecto al valor base del mismo escenario y semilla.
+Una nueva ejecución retoma corridas ya guardadas si los insumos coinciden.
+La sensibilidad cambia un parámetro por vez. Cuando varía `w_interest`, los
+otros pesos de similitud se reescalan proporcionalmente para sumar uno; cuando
+varía `w_agreement`, `w_sentiment` toma su complemento.
