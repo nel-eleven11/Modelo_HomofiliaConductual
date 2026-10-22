@@ -394,3 +394,9 @@ del experimento se crean `run_metrics.csv`, `scenario_summary.csv`,
 comando reanuda corridas ya guardadas si sus insumos congelados siguen
 iguales. Las comparaciones usan las mismas semillas en los tres escenarios
 y estiman intervalos descriptivos del 95 % con la distribución t.
+
+Para regenerar las tres figuras de trayectorias desde los agregados:
+
+```bash
+python scripts/plot_phase18.py
+```
