@@ -9,8 +9,11 @@ Los parámetros iniciales son operacionales, no estimaciones empíricamente cali
 ## Estado
 
 Fase 21: tablas y figuras finales para tesis a partir de los experimentos
-guardados. La fase 20 de validación interna queda en espera. Consulte
+guardados. La fase 20 de validación interna está completada. Consulte
 [artefactos de tesis](docs/experiments/phase_21_thesis.md).
+La [validación interna](docs/experiments/phase_20_validation.md) documenta
+invariantes, casos controlados, comparación cualitativa con literatura y
+estabilidad entre semillas.
 Fase 19: sensibilidad local de siete parámetros, uno por vez, en los tres
 escenarios de homofilia. Consulte [análisis de sensibilidad](docs/experiments/phase_19_sensitivity.md).
 Fase 18: comparación pareada de homofilia baja, media y alta con 30 semillas
@@ -448,4 +451,18 @@ Se crean `outputs/phase-21-thesis/` y su ZIP con tablas CSV, figuras PNG/PDF
 y un manifiesto de fuentes. Las redes dibujadas muestran hasta tres vínculos
 fuertes por agente; sus métricas se calculan con la red completa. Consulte
 el [informe de fase 21](docs/experiments/phase_21_thesis.md) para las
-definiciones, resultados y el estado pendiente de la fase 20.
+definiciones, resultados y el estado de la validación interna.
+
+## Validación interna
+
+Con las 90 corridas completas de la fase 18 disponibles:
+
+```bash
+python -m homophily_sim.experiments.validation
+```
+
+El comando audita interacciones y vínculos guardados, ejecuta casos controlados
+con proveedores simulados y resume variación entre semillas. Guarda tablas,
+configuraciones por corrida y un ZIP resumido en `outputs/phase-20-validation/`
+y `outputs/phase-20-validation-summary.zip`. El informe explica los alcances
+y las limitaciones de las conclusiones.

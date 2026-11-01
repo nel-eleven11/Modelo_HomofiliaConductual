@@ -108,7 +108,8 @@ def _trajectory_figures(rows: list[dict[str, str]], destination: Path) -> None:
 
 
 def _table_artifacts(
-    scenario_root: Path, sensitivity_root: Path, probe_path: Path, destination: Path,
+    scenario_root: Path, sensitivity_root: Path, probe_path: Path,
+    validation_root: Path, destination: Path,
 ) -> tuple[list[dict[str, str]], list[dict[str, object]]]:
     run_rows = _read_csv(scenario_root / "run_metrics.csv")
     seeds, semesters = validate_scenario_rows(run_rows)
@@ -194,10 +195,21 @@ def _table_artifacts(
          "cost_status": "Not recorded; no billed amount inferred"},
     ]
     _write_csv(destination / "llm_usage.csv", usage)
-    _write_csv(
-        destination / "validation_status.csv",
-        [{"phase": 20, "status": "pending", "note": "Internal validation deferred by user"}],
-    )
+    validation_file = validation_root / "validation_summary.json"
+    if validation_file.exists():
+        validation = json.loads(validation_file.read_text(encoding="utf-8"))
+        validation_status = str(validation["status"])
+        validation_note = (
+            f"{validation['verification']['runs']} stored runs audited; "
+            f"{validation['logical_probes']['passed']} logical probes passed; "
+            f"{validation['controlled']['contrasts_passed']} controlled contrasts passed"
+        )
+    else:
+        validation_status = "pending"
+        validation_note = "Phase 20 results unavailable"
+    _write_csv(destination / "validation_status.csv", [{
+        "phase": 20, "status": validation_status, "note": validation_note,
+    }])
     return summary, usage
 
 
@@ -317,10 +329,15 @@ def _llm_figure(usage: list[dict[str, object]], destination: Path) -> None:
     _save(figure, destination / "llm_usage")
 
 
-def generate(scenario_root: Path, sensitivity_root: Path, probe: Path, output: Path) -> Path:
+def generate(
+    scenario_root: Path, sensitivity_root: Path, probe: Path, output: Path,
+    validation_root: Path = Path("outputs/phase-20-validation"),
+) -> Path:
     """Create checked thesis tables, vector/raster figures, and a source manifest."""
     output.mkdir(parents=True, exist_ok=True)
-    summary, usage = _table_artifacts(scenario_root, sensitivity_root, probe, output)
+    summary, usage = _table_artifacts(
+        scenario_root, sensitivity_root, probe, validation_root, output
+    )
     _trajectory_figures(summary, output)
     _network_figures(scenario_root, output)
     _relationship_distribution(scenario_root, output)
@@ -343,6 +360,9 @@ def generate(scenario_root: Path, sensitivity_root: Path, probe: Path, output: P
         scenario_root / "runs" / f"phase18-{scenario}-seed-001" / name
         for scenario in SCENARIOS for name in ("agents.parquet", "interactions.parquet")
     )
+    validation_summary = validation_root / "validation_summary.json"
+    if validation_summary.exists():
+        sources.append(validation_summary)
     repository = Path(__file__).resolve().parents[1]
 
     def source_name(path: Path) -> str:
@@ -357,7 +377,10 @@ def generate(scenario_root: Path, sensitivity_root: Path, probe: Path, output: P
         "sensitivity_replicates_per_condition": 5,
         "representative_network_seed": 1, "display_edges_per_observer": 3,
         "network_metrics_use_all_edges": True,
-        "validation_phase_20": "pending per user instruction",
+        "validation_phase_20": (
+            json.loads(validation_summary.read_text(encoding="utf-8"))["status"]
+            if validation_summary.exists() else "pending"
+        ),
         "llm_cost": "Gemini sample billed amount not recorded; full mock experiment used no API",
         "sources_sha256": {
             source_name(path): sha256(path.read_bytes()).hexdigest() for path in sources
@@ -375,6 +398,9 @@ def generate(scenario_root: Path, sensitivity_root: Path, probe: Path, output: P
         report = Path(__file__).resolve().parents[1] / "docs/experiments/phase_21_thesis.md"
         if report.exists():
             bundle.write(report, "phase_21_thesis.md")
+        validation_report = report.with_name("phase_20_validation.md")
+        if validation_report.exists() and validation_summary.exists():
+            bundle.write(validation_report, validation_report.name)
     with ZipFile(archive) as bundle:
         if bundle.testzip() is not None:
             raise RuntimeError("thesis archive failed integrity check")
@@ -389,9 +415,13 @@ def main() -> None:
         "--probe", type=Path,
         default=Path("outputs/pilot-2-medium-seed-42-final/gemini_probe.json"),
     )
+    parser.add_argument(
+        "--validation", type=Path, default=Path("outputs/phase-20-validation")
+    )
     parser.add_argument("--output", type=Path, default=Path("outputs/phase-21-thesis"))
     args = parser.parse_args()
-    print(generate(args.scenarios, args.sensitivity, args.probe, args.output))
+    print(generate(args.scenarios, args.sensitivity, args.probe, args.output,
+                   validation_root=args.validation))
 
 
 if __name__ == "__main__":

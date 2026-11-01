@@ -80,11 +80,11 @@ inferirlo de una tarifa externa.
 
 ## Estado de la validación
 
-Por instrucción del usuario, la fase 20 de validación interna queda en
-espera. `validation_status.csv` marca esa tabla como pendiente. Las
-pruebas y comprobaciones técnicas de esta fase verifican generación y
-consistencia de los artefactos, pero no sustituyen los experimentos
-controlados ni la comparación con literatura previstos en la fase 20.
+La [fase 20](phase_20_validation.md) quedó completada después de generar
+este paquete por primera vez. `validation_status.csv` incorpora el estado
+de la auditoría de 90 corridas, siete sondas lógicas y cinco contrastes
+controlados. La validación es interna y cualitativa respecto a literatura;
+no demuestra calibración empírica ni capacidad predictiva.
 
 ## Reproducción y entrega
 
@@ -95,7 +95,8 @@ Desde el entorno virtual del repositorio, con las salidas previas en
 python scripts/generate_phase21.py
 ```
 
-El comando crea `outputs/phase-21-thesis/` y
+El generador incorpora automáticamente `outputs/phase-20-validation/`
+cuando existe. El comando crea `outputs/phase-21-thesis/` y
 `outputs/phase-21-thesis.zip`. La carpeta contiene tablas CSV, figuras
 PNG y PDF, y el manifiesto. El ZIP reúne esos archivos y este informe
 para trasladarlos a la presentación. Los datos de las corridas completas
