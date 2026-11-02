@@ -110,6 +110,9 @@ def test_exposure_and_reply_update_opposite_directions() -> None:
     )
     assert len(event.exposed_ids) == len(event.participant_ids) == 1
     assert len(event.records) == 2
+    assert len(event.opportunities) == 1
+    assert event.opportunities[0].relationship_before == 0.5
+    assert event.opportunities[0].participated
     first, reply = event.records
     assert (first.sender_id, first.receiver_id) == (reply.receiver_id, reply.sender_id)
     assert first.relationship_before == reply.relationship_before == 0.5
@@ -127,6 +130,10 @@ def test_exposure_and_reply_update_opposite_directions() -> None:
     assert len(event_without_reply.exposed_ids) == 1
     assert event_without_reply.participant_ids == ()
     assert len(event_without_reply.records) == 1
+    assert not event_without_reply.opportunities[0].participated
+    assert fresh[event_without_reply.exposed_ids[0]].relationships[
+        event_without_reply.initiator_id
+    ] == event_without_reply.records[0].relationship_after
 
     baseline_outcomes = {
         bool(run_conversation(
@@ -136,6 +143,43 @@ def test_exposure_and_reply_update_opposite_directions() -> None:
         for seed in range(16)
     }
     assert baseline_outcomes == {False, True}
+
+
+def test_participation_uses_prior_before_exposure_update() -> None:
+    topic = Topic(
+        topic_id="privacy", category="technology", subcategory="privacy",
+        prompt="¿Te importa la privacidad?", polarization_level=PolarizationLevel.LOW,
+    )
+    bank = TopicBank(
+        topic_bank_version="test", taxonomy={"technology": ["privacy"]},
+        related_categories={"technology": []}, topics=(topic,),
+    )
+    students = [
+        StudentAgent(id=0, age=18, sex=Sex.FEMALE,
+                     origin=Origin.GUATEMALA_DEPARTMENT, semester=1,
+                     interests={"technology"}, extraversion=5,
+                     topic_orientations={"privacy": 1}, relationships={1: 0.9}),
+        StudentAgent(id=1, age=18, sex=Sex.MALE,
+                     origin=Origin.GUATEMALA_DEPARTMENT, semester=1,
+                     interests={"technology"}, extraversion=5,
+                     topic_orientations={"privacy": -1}, relationships={0: 0.9}),
+    ]
+    context = ConversationContext(
+        run_id="prior", seed=7, semester=1, week=1, day=1,
+        period=1, course_id="C01", section_id="A",
+    )
+    event = run_conversation(
+        students, bank, CONFIG.model_copy(update={"beta_0": -100}),
+        MockLanguageModelProvider(), MockSentimentAnalyzer(), Random(7), context,
+    )
+    attempt = event.opportunities[0]
+    first = event.records[0]
+    assert not attempt.participated
+    assert attempt.relationship_before == first.relationship_before == 0.9
+    assert first.relationship_after != 0.9
+    assert students[attempt.candidate_id].relationships[attempt.initiator_id] == (
+        first.relationship_after
+    )
 
 
 def test_one_week_with_twenty_agents_is_reproducible() -> None:

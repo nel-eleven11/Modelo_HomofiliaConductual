@@ -25,6 +25,7 @@ w_agreement: 0.75
 w_sentiment: 0.25
 epsilon_start: 0.25
 initial_relationship: 0.50
+strong_relationship_threshold: 0.70
 max_age_difference: 10
 demographic_profile: custom
 interest_count_probabilities:

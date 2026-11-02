@@ -13,6 +13,7 @@ from homophily_sim.config import SimulationConfig
 from homophily_sim.data.topics import TopicBank, topic_interest_score
 from homophily_sim.domain.agent import StudentAgent
 from homophily_sim.domain.interaction import InteractionRecord
+from homophily_sim.domain.opportunity import ParticipationOpportunity
 from homophily_sim.domain.section import Section
 from homophily_sim.domain.topic import Topic
 from homophily_sim.llm.base import LanguageModelProvider, UtteranceRequest
@@ -56,6 +57,7 @@ class ConversationEvent:
     participant_ids: tuple[int, ...]
     initial_text: str
     records: tuple[InteractionRecord, ...]
+    opportunities: tuple[ParticipationOpportunity, ...] = ()
 
 
 def start_weights(students: Sequence[StudentAgent], epsilon_start: float) -> tuple[float, ...]:
@@ -183,15 +185,28 @@ def run_conversation(
     )
     participants: list[tuple[StudentAgent, float]] = []
     records: list[InteractionRecord] = []
+    opportunities: list[ParticipationOpportunity] = []
     for receiver in exposed:
+        interest = topic_interest_score(receiver.interests, topic, bank)
+        prior = receiver.relationship_to(initiator.id, config.initial_relationship)
+        similarity = agent_similarity(initiator, receiver, config)
         chance = participation_probability(
             receiver.extraversion,
-            topic_interest_score(receiver.interests, topic, bank),
-            receiver.relationship_to(initiator.id, config.initial_relationship),
-            agent_similarity(initiator, receiver, config),
+            interest, prior, similarity,
             config,
         )
-        if rng.random() < chance:
+        participated = rng.random() < chance
+        opportunities.append(ParticipationOpportunity(
+            run_id=context.run_id, scenario=config.scenario, seed=context.seed,
+            semester=context.semester, week=context.week, day=context.day,
+            course_id=context.course_id, section_id=context.section_id,
+            conversation_id=context.conversation_id, topic_id=topic.topic_id,
+            initiator_id=initiator.id, candidate_id=receiver.id,
+            candidate_interest=interest, similarity=similarity,
+            relationship_before=prior, participation_probability=chance,
+            participated=participated,
+        ))
+        if participated:
             participants.append((receiver, chance))
         records.append(_evaluate_message(
             initiator, receiver, initial_text, topic, bank, config,
@@ -213,6 +228,7 @@ def run_conversation(
         participant_ids=tuple(student.id for student, _ in participants),
         initial_text=initial_text,
         records=tuple(records),
+        opportunities=tuple(opportunities),
     )
 
 

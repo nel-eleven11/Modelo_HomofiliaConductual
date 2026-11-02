@@ -12,6 +12,7 @@ from homophily_sim.data.population import generate_population
 from homophily_sim.data.topics import TopicBank
 from homophily_sim.domain.agent import StudentAgent
 from homophily_sim.domain.interaction import InteractionRecord
+from homophily_sim.domain.opportunity import ParticipationOpportunity
 from homophily_sim.domain.section import Section
 from homophily_sim.llm.base import LanguageModelProvider
 from homophily_sim.network.metrics import NetworkMetrics, compute_metrics
@@ -60,6 +61,7 @@ class HomophilyModel(mesa.Model):  # type: ignore[misc]
         self.last_events: list[ConversationEvent] = []
         self.conversation_count = 0
         self.interactions: list[InteractionRecord] = []
+        self.opportunities: list[ParticipationOpportunity] = []
         self.snapshots: list[NetworkSnapshot] = []
         self.year_snapshots: list[NetworkSnapshot] = []
         self.final_snapshot: NetworkSnapshot | None = None
@@ -142,6 +144,9 @@ class HomophilyModel(mesa.Model):  # type: ignore[misc]
         )
         self.conversation_count += len(self.last_events)
         self.interactions.extend(record for event in self.last_events for record in event.records)
+        self.opportunities.extend(
+            opportunity for event in self.last_events for opportunity in event.opportunities
+        )
         self.datacollector.collect(self)
         if self.current_week == self.config.weeks_per_semester:
             self._finish_semester(students)

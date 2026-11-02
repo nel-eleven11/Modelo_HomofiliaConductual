@@ -8,6 +8,8 @@ from typing import Any
 
 from scipy.stats import t  # type: ignore[import-untyped]
 
+from homophily_sim.io.mechanisms import MECHANISM_METRICS
+
 METRICS = (
     "sex_assortativity",
     "origin_assortativity",
@@ -19,7 +21,7 @@ METRICS = (
     "isolate_count",
     "reciprocity",
     "density",
-)
+) + MECHANISM_METRICS
 
 
 def describe(values: Sequence[float | int | None]) -> dict[str, float | int | None]:

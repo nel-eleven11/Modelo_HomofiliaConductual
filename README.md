@@ -403,6 +403,52 @@ comando reanuda corridas ya guardadas si sus insumos congelados siguen
 iguales. Las comparaciones usan las mismas semillas en los tres escenarios
 y estiman intervalos descriptivos del 95 % con la distribución t.
 
+### Ampliación de mecanismos de interacción
+
+Las corridas nuevas también guardan `participation_attempts.parquet`: una fila
+por estudiante expuesto, con probabilidad, decisión y vínculo dirigido
+**inmediatamente anterior** a la evaluación del mensaje. Escuchar o leer la
+opinión sigue actualizando el vínculo, incluso cuando el estudiante no responde.
+La red principal continúa siendo la red dirigida de evaluaciones; la red
+complementaria de respuestas activas representa el flujo del mensaje
+(`responder -> iniciador`) y usa el número de respuestas como peso.
+
+Cada carpeta de corrida incluye `interaction_summary.csv`,
+`relationship_evolution.csv`, `topic_summary.csv`, `student_activity.csv` y
+una copia `topic_bank.json` para recalcular los temas con la misma taxonomía,
+además de
+`network_snapshots/{evaluation,active_response}/semester_XX.graphml` más
+`final.graphml`. Las cuatro tablas también se reúnen en la raíz del experimento.
+`run_metrics.csv`, `scenario_summary.csv` y las comparaciones pareadas incorporan
+indicadores con nombres explícitos de exposición, evaluación y respuesta sin
+renombrar las métricas históricas de red. Los resúmenes y comparaciones se
+pueden recalcular desde los archivos guardados, sin llamar a Gemini:
+
+```bash
+python -m homophily_sim.experiments.rebuild_mechanisms outputs/mechanism-scenarios
+```
+
+La persistencia de actividad compara pares activos en semestres consecutivos;
+la permanencia de vínculos fuertes compara aristas observadas cuyo peso está
+por encima de `strong_relationship_threshold` (0.70 por defecto). La mezcla
+entre comunidades usa las comunidades del cierre del semestre anterior; el
+primer semestre se marca como descriptivo porque no existe referencia previa.
+La red de evaluaciones incluye a quienes escucharon aunque no respondieron.
+El umbral de vínculo fuerte es una convención analítica y no define amistad.
+
+Las salidas previas de las fases 18 y 19 siguen disponibles tal como fueron
+generadas, pero no tienen el nuevo archivo de oportunidades. Para producir
+resultados ampliados use un directorio de salida nuevo, por ejemplo:
+
+```bash
+python -m homophily_sim.experiments.runner --output outputs/mechanism-scenarios
+python scripts/plot_mechanisms.py --experiment outputs/mechanism-scenarios --networks
+```
+
+Para dibujar la red complementaria, agregue `--network-kind active_response`.
+Las definiciones y denominadores están en la
+[guía de métricas de mecanismos](docs/experiments/mechanism_metrics.md).
+
 Para regenerar las tres figuras de trayectorias desde los agregados:
 
 ```bash

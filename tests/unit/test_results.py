@@ -7,6 +7,7 @@ import pytest
 from homophily_sim.config import load_config
 from homophily_sim.domain.agent import Origin, Sex, StudentAgent
 from homophily_sim.domain.interaction import InteractionRecord
+from homophily_sim.domain.opportunity import ParticipationOpportunity
 from homophily_sim.io.metadata import make_run_metadata
 from homophily_sim.io.results import load_run, save_run
 
@@ -81,12 +82,21 @@ def test_run_roundtrip(tmp_path):  # type: ignore[no-untyped-def]
             "participation_probability": 0.42,
         }
     )
+    opportunity = ParticipationOpportunity(
+        run_id="pilot-1", scenario=config.scenario, seed=42,
+        semester=1, week=1, day=1, course_id="C1", section_id="S1",
+        conversation_id="conversation-1", topic_id="tech_ai_jobs",
+        initiator_id=1, candidate_id=0, candidate_interest=1.0,
+        similarity=0.5, relationship_before=0.5,
+        participation_probability=0.42, participated=True,
+    )
     path = save_run(
         tmp_path,
         config=config,
         agents=agents,
         interactions=[interaction, reply],
         metadata=metadata,
+        opportunities=[opportunity],
     )
     assert {file.name for file in path.iterdir()} == {
         "config.json",
@@ -94,12 +104,20 @@ def test_run_roundtrip(tmp_path):  # type: ignore[no-untyped-def]
         "agents.parquet",
         "interactions.parquet",
         "relationships.parquet",
+        "participation_attempts.parquet",
     }
     restored = load_run(path)
     assert restored.config == config
     assert restored.metadata == metadata
     assert restored.agents == agents
     assert restored.interactions == [interaction, reply]
+    assert restored.opportunities == [opportunity]
+    with pytest.raises(ValueError, match="response decision"):
+        save_run(
+            tmp_path / "invalid", config=config, agents=agents,
+            interactions=[interaction], metadata=metadata,
+            opportunities=[opportunity],
+        )
     assert restored.relationships.to_dict("records") == [
         {"observer_id": 0, "other_id": 1, "weight": 0.72}
     ]

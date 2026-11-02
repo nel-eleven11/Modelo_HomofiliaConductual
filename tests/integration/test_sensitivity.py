@@ -4,6 +4,7 @@ import csv
 import json
 from pathlib import Path
 
+from homophily_sim.analysis.statistics import METRICS
 from homophily_sim.experiments.scenarios import load_homophily_scenarios
 from homophily_sim.experiments.sensitivity import build_variants, run_sensitivity
 
@@ -44,7 +45,9 @@ def test_short_sensitivity_run_is_paired_and_resumable(tmp_path: Path) -> None:
     assert summary["run_count"] == 9
     assert summary["semester_rows"] == 18
     assert len(inventory) == 9
-    assert len(summary["paired_deltas"]) == 3 * 2 * 2 * 10
+    assert 3 * 2 * 2 * 10 < len(summary["paired_deltas"]) <= 3 * 2 * 2 * len(METRICS)
+    assert {item["metric"] for item in summary["paired_deltas"]} <= set(METRICS)
+    assert any(item["metric"] == "participation_rate" for item in summary["paired_deltas"])
     assert {float(item["h"]) for item in inventory} == {0.2, 0.5, 0.8}
     assert run_sensitivity(
         output_root=destination, seeds=(1,), parameters=("alpha_relationship",),

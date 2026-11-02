@@ -39,6 +39,7 @@ class SimulationConfig(BaseModel):
     w_sentiment: float = Field(ge=0, le=1)
     epsilon_start: float = Field(gt=0, le=1)
     initial_relationship: float = Field(ge=0, le=1)
+    strong_relationship_threshold: float = Field(default=0.70, ge=0, le=1)
     max_age_difference: int = Field(gt=0)
     demographic_profile: str = Field(min_length=1)
     interest_count_probabilities: dict[int, float]

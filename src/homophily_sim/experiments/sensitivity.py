@@ -16,6 +16,7 @@ from homophily_sim.data.demographics import DemographicProfile, load_demographic
 from homophily_sim.data.topics import TopicBank, load_topics
 from homophily_sim.experiments.runner import _frozen_files, _metric_row, _write_csv, _write_json
 from homophily_sim.experiments.scenarios import load_homophily_scenarios
+from homophily_sim.io.mechanisms import export_mechanisms, mechanism_row, read_csv, write_csv
 from homophily_sim.io.metadata import current_git_commit, make_run_metadata
 from homophily_sim.io.results import save_run
 from homophily_sim.llm.mock import MockLanguageModelProvider
@@ -139,14 +140,6 @@ def _run_variant(
         or model.final_snapshot is None
     ):
         raise RuntimeError(f"incomplete sensitivity run: {run_id}")
-    rows = []
-    for semester, metrics in model.metric_history:
-        row = _metric_row(config.scenario, config.h, seed, semester, metrics)
-        row.update(
-            {"parameter": variant.parameter, "level": variant.level,
-             "value": variant.value, "variant": variant.key}
-        )
-        rows.append(row)
     metadata = make_run_metadata(
         config, run_id=run_id, seed=seed, prompt_version="mock-v1",
         topic_bank_version=bank.topic_bank_version,
@@ -157,7 +150,20 @@ def _run_variant(
     destination = save_run(
         run_root, config=config, agents=model.students,
         interactions=model.interactions, metadata=metadata,
+        opportunities=model.opportunities,
     )
+    mechanisms = export_mechanisms(destination, bank)
+    rows = []
+    for semester, metrics in model.metric_history:
+        row = _metric_row(config.scenario, config.h, seed, semester, metrics)
+        row.update(mechanism_row(
+            mechanisms.interaction[semester - 1], mechanisms.relationships[semester - 1]
+        ))
+        row.update({
+            "parameter": variant.parameter, "level": variant.level,
+            "value": variant.value, "variant": variant.key,
+        })
+        rows.append(row)
     _write_json(
         destination / "metrics_by_semester.json",
         [{"semester": semester, **asdict(metrics)}
@@ -225,6 +231,12 @@ def run_sensitivity(
         _write_json(plan_path, plan)
     rows: list[dict[str, Any]] = []
     inventory: list[dict[str, Any]] = []
+    mechanism_tables: dict[str, list[dict[str, str]]] = {
+        name: [] for name in (
+            "interaction_summary.csv", "relationship_evolution.csv",
+            "topic_summary.csv", "student_activity.csv",
+        )
+    }
     total = len(seeds) * sum(len(variants) for variants in conditions.values())
     completed = 0
     for seed in seeds:
@@ -250,6 +262,8 @@ def run_sensitivity(
                     )
                 rows.extend(current_rows)
                 inventory.append(current_inventory)
+                for name, combined in mechanism_tables.items():
+                    combined.extend(read_csv(run_dir / name))
                 completed += 1
                 print(f"{completed}/{total} h={variant.config.h:.2f} "
                       f"{variant.key} seed={seed}", flush=True)
@@ -265,6 +279,8 @@ def run_sensitivity(
     _write_csv(destination / "run_metrics.csv", rows)
     _write_csv(destination / "sensitivity_summary.csv", summary)
     _write_csv(destination / "paired_deltas.csv", deltas)
+    for name, combined in mechanism_tables.items():
+        write_csv(destination / name, combined)
     _write_json(
         destination / "sensitivity_summary.json",
         {"run_count": len(inventory), "semester_rows": len(rows),
