@@ -1,5 +1,9 @@
 # Piloto 1: escenario de homofilia media
 
+Este documento conserva el resultado histórico del piloto con sentimiento
+clasificado localmente. Las nuevas ejecuciones de `pilot_1` usan por defecto
+lenguaje y sentimiento simulados; sus cifras pueden diferir de las de abajo.
+
 ## Configuración y alcance
 
 - Cohorte sintética: 20 agentes; semilla: 42; `h = 0.50`.

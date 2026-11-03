@@ -12,6 +12,28 @@ El objetivo del software es estudiar cómo distintos niveles de homofilia conduc
 
 No se busca predecir el comportamiento de estudiantes reales. El modelo es exploratorio y utiliza datos sintéticos.
 
+## Decisión metodológica vigente posterior a la Fase 21
+
+Los experimentos nuevos usan `MockLanguageModelProvider` y
+`MockSentimentAnalyzer` exclusivamente. No ejecutar llamadas a Gemini ni cargar
+el clasificador local de Transformers para producir las interacciones de las
+corridas principales. Esta decisión reemplaza la elección de proveedor de las
+secciones 13 y 15 para trabajo experimental futuro; las fases y pilotos ya
+realizados se conservan como registro histórico.
+
+Motivo: una corrida longitudinal con Gemini requiere demasiadas solicitudes,
+tiempo y gasto para el presupuesto disponible. La generación simulada permite
+comparaciones pareadas reproducibles de las reglas sociales. El analizador
+simulado vigente asigna sentimiento neutral a todos los textos
+(`p_neutral = 1`, valencia `0.5`); por tanto, el sentimiento no explica
+variaciones entre agentes o escenarios. Las conclusiones deben atribuirse a
+las reglas explícitas de orientación, participación y vínculo, sin presentarse
+como evidencia de lenguaje o emociones humanas realistas.
+
+Conservar los datos parciales de la prueba con Gemini para auditoría, sin
+combinarlos con resultados de corridas simuladas ni reanudarla sin una nueva
+instrucción explícita del usuario.
+
 ---
 
 # 2. Reglas de trabajo para Codex

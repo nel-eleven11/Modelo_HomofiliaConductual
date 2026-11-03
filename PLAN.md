@@ -10,6 +10,20 @@ Cada fase debe producir un sistema funcional y verificable.
 
 No completar el proyecto de una sola vez.
 
+## Decisión metodológica posterior a las fases completadas
+
+Desde esta decisión, las corridas experimentales usan lenguaje y sentimiento
+simulados (`MockLanguageModelProvider` y `MockSentimentAnalyzer`). Las fases
+13–16 documentan integraciones y pilotos históricos, pero no prescriben el
+proveedor para experimentos futuros. La corrida longitudinal con Gemini se
+detuvo después de cinco semanas completas por su costo y duración; su
+checkpoint queda separado y no debe mezclarse con las corridas simuladas.
+
+El sentimiento simulado actual es neutral para todos los mensajes. La valencia
+es constante (`0.5`) y las diferencias en el puntaje de interacción provienen
+del acuerdo temático. Registrar esta limitación al interpretar métricas de
+sentimiento y resultados de red.
+
 ---
 
 # Fase 0 — Preparación del repositorio

@@ -16,7 +16,6 @@ from homophily_sim.llm.gemini import GeminiLanguageModelProvider
 from homophily_sim.llm.mock import MockLanguageModelProvider
 from homophily_sim.nlp.base import SentimentAnalyzer
 from homophily_sim.nlp.mock import MockSentimentAnalyzer
-from homophily_sim.nlp.sentiment import TransformersSentimentAnalyzer
 from homophily_sim.simulation.conversation import ConversationEvent
 
 
@@ -122,7 +121,7 @@ def run_pilot_1(
     """Run 20 students for two simulated weeks and save auditable outcomes."""
     root = Path(__file__).resolve().parents[3]
     provider = language_model or MockLanguageModelProvider()
-    analyzer = sentiment_analyzer or TransformersSentimentAnalyzer()
+    analyzer = sentiment_analyzer or MockSentimentAnalyzer()
     events: list[ConversationEvent] = []
     destination = run_mock_mvp(
         config_path=root / "configs/homophily_medium.yaml",
@@ -279,22 +278,16 @@ def run_pilot_1(
 
 
 def main() -> None:
-    """Run the offline pilot by default, with optional Gemini or mock sentiment."""
+    """Run the pilot with simulated language and sentiment."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("outputs"))
     parser.add_argument("--run-id", default="pilot-1-medium-seed-42")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--gemini", action="store_true")
-    parser.add_argument("--mock-sentiment", action="store_true")
     args = parser.parse_args()
     destination = run_pilot_1(
         output_root=args.output,
         run_id=args.run_id,
         seed=args.seed,
-        language_model=GeminiLanguageModelProvider(generation_seed=args.seed)
-        if args.gemini
-        else None,
-        sentiment_analyzer=MockSentimentAnalyzer() if args.mock_sentiment else None,
     )
     print(destination)
 

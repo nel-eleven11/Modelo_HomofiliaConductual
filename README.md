@@ -6,6 +6,15 @@ Computación de la Universidad del Valle de Guatemala, durante 10 semestres.
 Los agentes no representan personas reales y el modelo no predice amistades reales.
 Los parámetros iniciales son operacionales, no estimaciones empíricamente calibradas.
 
+**Metodología vigente:** las corridas experimentales usan lenguaje y sentimiento
+simulados. No necesitan `GEMINI_API_KEY`, acceso de red ni el clasificador local
+de Transformers. `MockSentimentAnalyzer` devuelve sentimiento neutral para
+todos los mensajes (`sentiment_valence = 0.5`); por ello, el sentimiento no
+varía entre escenarios. La integración con Gemini y los pilotos que la usaron
+se conservan solo como antecedentes históricos. La prueba longitudinal pagada
+se detuvo tras cinco semanas completas y no forma parte de los resultados
+comparativos.
+
 ## Estado
 
 Fase 21: tablas y figuras finales para tesis a partir de los experimentos
@@ -113,9 +122,8 @@ persistencia se mantiene en módulos separados conforme avanza el plan.
 
 ## Variables de entorno y resultados
 
-`.env.example` documenta `GEMINI_API_KEY`, `GEMINI_MODEL` y la ruta de caché.
-Puede copiarse a `.env` y configurarse localmente para usar Gemini; los pilotos
-con mocks no necesitan una API key.
+`.env.example` conserva las variables de la integración histórica con Gemini.
+Las corridas actuales no necesitan archivo `.env` ni API key.
 `.env`, sus variantes locales, el entorno virtual, las cachés y los resultados en
 `outputs/` nuevos están excluidos de Git; `outputs/.gitkeep` conserva la carpeta.
 Los resultados del MVP que ya estaban versionados no quedan excluidos
@@ -310,42 +318,22 @@ comparten posiciones calculadas con la semilla y la red final. Las figuras
 usan Matplotlib sin depender de una pantalla; las salidas generadas no se
 versionan.
 
-## Generación opcional con Gemini
+## Lenguaje y sentimiento de las corridas actuales
 
-`GeminiLanguageModelProvider` implementa la misma interfaz que el proveedor
-mock. Lee `GEMINI_API_KEY` y, por defecto, usa `gemini-3.5-flash-lite`.
-El modelo previsto originalmente, `gemini-2.5-flash-lite`, ya no está
-disponible para proyectos nuevos; por eso se cambió el valor predeterminado
-sin modificar las reglas sociales. Si `.env` contiene `GEMINI_MODEL`, actualice
-esa línea: su valor tiene prioridad sobre el predeterminado del código.
-El prompt versionado `student-spanish-v1` transmite solo el tema, la
-orientación temática, intereses relevantes, extroversión para el estilo y
-mensaje previo. Gemini escribe el texto; la simulación conserva el control
-de probabilidades, relaciones y estados. La temperatura inicial es `0.3`,
-el límite es 128 tokens de salida y el texto se recorta a `max_words`.
+`MockLanguageModelProvider` crea frases breves en español a partir de la
+orientación del agente y el tema. `MockSentimentAnalyzer` devuelve siempre
+`p_negative = 0`, `p_neutral = 1`, `p_positive = 0`, por lo que la valencia es
+`0.5`. Con los pesos iniciales, el puntaje de interacción queda
+`s_ij = 0.75 * acuerdo_ij + 0.125`. El texto generado no introduce una señal
+adicional de sentimiento. Las reglas de exposición, participación y actualización
+de vínculos se mantienen igual.
 
-La caché SQLite en `outputs/llm_cache.sqlite3` evita llamadas duplicadas y
-puede configurarse con `HOMOPHILY_LLM_CACHE_PATH`. Su clave incorpora el modelo,
-la versión del prompt, el agente, tema, orientación, contexto previo, semilla
-y parámetros de generación. El cliente usa timeout y reintentos para errores
-transitorios, incluidos límites de tasa. Sin clave o respuesta válida, informa
-el error; los tests usan un cliente simulado y no contactan la API.
+El código de Gemini y del clasificador local permanece para documentar los
+pilotos históricos; no participa en los experimentos vigentes. No ejecutar los
+comandos `gemini_pilot`, `real_gemini` ni las opciones `--gemini` o
+`--probe-gemini` al producir resultados comparativos.
 
-Después de configurar la clave, el piloto manual realiza cinco solicitudes
-reales y permite hasta diez con `--count`:
-
-```bash
-python -m homophily_sim.experiments.gemini_pilot --count 5
-```
-
-Para sustituir el lenguaje mock dentro del modelo Mesa y generar el mismo
-informe visual, añada `--gemini` al comando `mock_mvp`; el sentimiento sigue
-siendo simulado hasta la Fase 14:
-
-```bash
-python -m homophily_sim.experiments.mock_mvp --smoke --gemini
-```
-# Piloto 2: 80 agentes durante un semestre
+## Piloto 2: 80 agentes durante un semestre
 
 Ejecute la cohorte completa durante las 20 semanas del primer semestre, con
 lenguaje y sentimiento simulados:
@@ -360,16 +348,8 @@ en CSV; métricas de red y resumen en JSON; y un informe Markdown con figuras.
 La configuración guardada contiene el horizonte del modelo (10 semestres),
 pero el resumen indica explícitamente el único semestre ejecutado.
 
-Para generar cinco mensajes de Gemini de agentes del piloto, con una segunda
-lectura de cada mensaje que mide los aciertos de caché, ejecute por separado:
-
-```bash
-python -m homophily_sim.experiments.pilot_2 --probe-gemini outputs/pilot-2-medium-seed-42
-```
-
-La muestra de Gemini requiere `GEMINI_API_KEY` en `.env`. Queda registrada en
-`gemini_probe.json`, junto con solicitudes API, aciertos de caché y tokens que
-informe el proveedor. No modifica el resultado de la simulación.
+La muestra histórica de Gemini del piloto 2 permanece documentada en
+[su informe](docs/pilots/pilot_2.md); no se usa en nuevas corridas.
 
 ## Piloto longitudinal: 10 semestres
 
@@ -512,23 +492,11 @@ con proveedores simulados y resume variación entre semillas. Guarda tablas,
 configuraciones por corrida y un ZIP resumido en `outputs/phase-20-validation/`
 y `outputs/phase-20-validation-summary.zip`. El informe explica los alcances
 y las limitaciones de las conclusiones.
-# Corrida longitudinal con Gemini
 
-Para ejecutar una sola corrida real del escenario base (`homophily_medium`,
-`h=0.50`), semilla 1 y los 10 semestres, configura `GEMINI_API_KEY` y
-`GEMINI_MODEL=gemini-3.5-flash-lite` en `.env`, activa `.venv` e instala las
-dependencias de `requirements-nlp.txt`. Luego ejecuta:
+## Prueba longitudinal con Gemini detenida
 
-```bash
-python -m homophily_sim.experiments.real_gemini --seed 1 --max-cost-usd 10
-```
-
-El ejecutor guarda un checkpoint al concluir cada semana en
-`outputs/real-gemini-medium-seed-001/checkpoint.sqlite3`. Si se interrumpe,
-el mismo comando reanuda desde la última semana completa usando la caché
-local de textos. `--max-weeks N` permite detenerlo después de N semanas
-totales para una comprobación breve. El límite monetario es una estimación
-basada en los tokens informados por Gemini, con las tarifas estándar de
-entrada y salida vigentes al preparar este ejecutor; revisa la facturación
-real en Google AI Studio. Los resultados finales quedan en `runs/` dentro
-del directorio de salida, con Parquet, CSV, GraphML y métricas semestrales.
+La prueba pagada del escenario medio, semilla 1, se detuvo tras cinco semanas
+completas. Su checkpoint y su caché permanecen en
+`outputs/real-gemini-medium-seed-001/` para auditoría, separados de los
+resultados con proveedores simulados. No son una corrida de diez semestres ni
+deben entrar en comparaciones entre escenarios.
