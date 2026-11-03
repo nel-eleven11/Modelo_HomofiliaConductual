@@ -151,11 +151,12 @@ def _report(
     final = {(str(row["scenario"]), str(row["metric"])): row
              for row in summary if row["semester"] == final_semester}
     lines = [
-        "# Fase 18 — escenarios de homofilia pareados",
+        "# Escenarios experimentales con semillas pareadas",
         "",
         f"{len(seeds)} semillas compartidas por tres escenarios; "
         f"{3 * len(seeds)} corridas de {final_semester} semestres.",
-        "Lenguaje y sentimiento simulados. Los demás parámetros son idénticos.",
+        "Lenguaje y sentimiento simulados. Las configuraciones completas y los "
+        "parámetros que varían constan en `experiment_plan.json`.",
         "",
         f"## Métricas al final del semestre {final_semester}",
         "",
@@ -196,12 +197,19 @@ def run_scenarios(
     sentiment_neutral_base: float = 0.70,
     sentiment_interest_effect: float = 0.40,
     sentiment_weight: float = 0.25,
+    similarity_weights: Mapping[str, Mapping[str, float]] | None = None,
 ) -> Path:
     """Execute or resume paired seeds, persisting every run and aggregate."""
     if not seeds or len(set(seeds)) != len(seeds) or any(seed < 0 for seed in seeds):
         raise ValueError("seeds must be a nonempty list of distinct nonnegative integers")
     root = Path(__file__).resolve().parents[3]
     configs = load_homophily_scenarios(root, smoke=smoke)
+    if similarity_weights is not None:
+        expected = {"w_interest", "w_age", "w_sex", "w_origin"}
+        if set(similarity_weights) != set(configs) or any(
+            set(weights) != expected for weights in similarity_weights.values()
+        ):
+            raise ValueError("similarity weights must define four weights for each scenario")
     configs = {
         name: SimulationConfig.model_validate({
             **config.model_dump(), "sentiment_rule": sentiment_rule,
@@ -209,6 +217,7 @@ def run_scenarios(
             "sentiment_interest_effect": sentiment_interest_effect,
             "w_sentiment": sentiment_weight,
             "w_agreement": 1 - sentiment_weight,
+            **(similarity_weights[name] if similarity_weights is not None else {}),
         })
         for name, config in configs.items()
     }
@@ -316,6 +325,8 @@ def main() -> None:
     parser.add_argument("--neutral-base", type=float, default=0.70)
     parser.add_argument("--interest-effect", type=float, default=0.40)
     parser.add_argument("--sentiment-weight", type=float, default=0.25)
+    parser.add_argument("--similarity-weights-file", type=Path,
+                        help="JSON mapping each scenario to w_interest, w_age, w_sex, w_origin")
     args = parser.parse_args()
     if args.seed_count < 1:
         parser.error("--seed-count must be positive")
@@ -324,6 +335,10 @@ def main() -> None:
         sentiment_rule=args.sentiment_rule, sentiment_neutral_base=args.neutral_base,
         sentiment_interest_effect=args.interest_effect,
         sentiment_weight=args.sentiment_weight,
+        similarity_weights=(
+            json.loads(args.similarity_weights_file.read_text(encoding="utf-8"))
+            if args.similarity_weights_file is not None else None
+        ),
     ))
 
 

@@ -1,0 +1,20 @@
+{
+  "homophily_low": {
+    "w_interest": 0.30,
+    "w_age": 0.25,
+    "w_sex": 0.25,
+    "w_origin": 0.20
+  },
+  "homophily_medium": {
+    "w_interest": 0.50,
+    "w_age": 0.15,
+    "w_sex": 0.15,
+    "w_origin": 0.20
+  },
+  "homophily_high": {
+    "w_interest": 0.70,
+    "w_age": 0.05,
+    "w_sex": 0.05,
+    "w_origin": 0.20
+  }
+}
