@@ -13,6 +13,13 @@ python -m homophily_sim.experiments.interest_network_analysis \
 La opción `--image-seed N` elige una semilla presente en los tres escenarios.
 De forma predeterminada se usa la menor semilla común. La opción `--output`
 permite elegir otro directorio para estos archivos derivados.
+Para una prueba de una sola corrida por escenario, sin generar los 90 mapas:
+
+```bash
+python -m homophily_sim.experiments.interest_network_analysis \
+  outputs/expressed-tone-v1-scenarios --only-seed 1 \
+  --output outputs/expressed-tone-v1-scenarios/interest_network_pilot_seed001
+```
 
 ## Mapa de calor por corrida
 

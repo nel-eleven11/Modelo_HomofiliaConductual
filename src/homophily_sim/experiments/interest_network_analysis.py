@@ -125,13 +125,16 @@ def _paired_final(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def analyze_experiment(
     experiment: Path, *, output: Path | None = None, image_seed: int | None = None,
+    only_seed: int | None = None,
 ) -> Path:
-    """Produce one heatmap per run and ten network images per selected scenario."""
+    """Produce heatmaps for selected runs and semester images for one shared seed."""
     experiment = Path(experiment)
     destination = output or experiment / "interest_network_analysis"
     inventory = read_csv(experiment / "run_inventory.csv")
+    if only_seed is not None:
+        inventory = [item for item in inventory if int(item["seed"]) == only_seed]
     if not inventory:
-        raise ValueError("run_inventory.csv contains no saved runs")
+        raise ValueError("no saved runs match the selected seed")
     available: dict[str, set[int]] = defaultdict(set)
     for item in inventory:
         available[item["scenario"]].add(int(item["seed"]))
@@ -241,8 +244,11 @@ def main() -> None:
                         help="experiment directory containing run_inventory.csv")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--image-seed", type=int)
+    parser.add_argument("--only-seed", type=int,
+                        help="analyze only this shared seed instead of every saved run")
     args = parser.parse_args()
-    print(analyze_experiment(args.experiment, output=args.output, image_seed=args.image_seed))
+    print(analyze_experiment(args.experiment, output=args.output,
+                             image_seed=args.image_seed, only_seed=args.only_seed))
 
 
 if __name__ == "__main__":
