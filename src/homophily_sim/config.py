@@ -1,7 +1,7 @@
 """Typed, versioned simulation parameters loaded from YAML."""
 
 from pathlib import Path
-from typing import Self
+from typing import Literal, Self
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -37,6 +37,11 @@ class SimulationConfig(BaseModel):
     gamma_section: float = Field(ge=0, le=1)
     w_agreement: float = Field(ge=0, le=1)
     w_sentiment: float = Field(ge=0, le=1)
+    sentiment_rule: Literal[
+        "neutral_constant", "fixed_random", "interest_conditioned"
+    ] = "neutral_constant"
+    sentiment_neutral_base: float = Field(default=0.70, ge=0, le=1)
+    sentiment_interest_effect: float = Field(default=0.40, ge=0, le=1)
     epsilon_start: float = Field(gt=0, le=1)
     initial_relationship: float = Field(ge=0, le=1)
     strong_relationship_threshold: float = Field(default=0.70, ge=0, le=1)
@@ -54,6 +59,8 @@ class SimulationConfig(BaseModel):
             raise ValueError("similarity weights must sum to 1")
         if abs(self.w_agreement + self.w_sentiment - 1) > 1e-9:
             raise ValueError("evaluation weights must sum to 1")
+        if self.sentiment_neutral_base - self.sentiment_interest_effect < 0:
+            raise ValueError("neutral probability must remain in [0, 1] for every interest")
         if self.sections_per_course > self.population_size:
             raise ValueError("sections_per_course cannot exceed population_size")
         if self.semesters != 2 * self.years:

@@ -295,7 +295,7 @@ def controlled_contrasts(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         results.append({
             "contrast": name, "metric": metric, "higher": higher, "lower": lower,
             **summary, "positive_seeds": sum(value > 0 for value in differences),
-            "passed": bool(summary["mean"] > 0),
+            "passed": bool(summary["mean"] is not None and summary["mean"] > 0),
         })
     neutral = [indexed["neutral_relationship", seed]["max_relationship_shift"]
                for seed in seeds]

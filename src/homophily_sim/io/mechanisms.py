@@ -31,6 +31,17 @@ MECHANISM_METRICS = (
     "median_agreement",
     "std_agreement",
     "mean_sentiment_valence",
+    "negative_message_rate",
+    "neutral_message_rate",
+    "positive_message_rate",
+    "mean_expressed_valence",
+    "mean_evaluated_valence",
+    "mean_interaction_score_negative_tone",
+    "mean_interaction_score_neutral_tone",
+    "mean_interaction_score_positive_tone",
+    "mean_relationship_delta_negative_tone",
+    "mean_relationship_delta_neutral_tone",
+    "mean_relationship_delta_positive_tone",
     "median_sentiment_valence",
     "std_sentiment_valence",
     "mean_interaction_score",
@@ -87,6 +98,8 @@ def export_mechanisms(path: Path, bank: TopicBank) -> MechanismTables:
         ("relationship_evolution.csv", tables.relationships),
         ("topic_summary.csv", tables.topics),
         ("student_activity.csv", tables.students),
+        ("tone_summary.csv", tables.tones or []),
+        ("tone_by_interest.csv", tables.tone_by_interest or []),
     ):
         write_csv(path / name, rows)
     snapshot_root = path / "network_snapshots"

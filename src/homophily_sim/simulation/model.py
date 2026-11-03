@@ -12,6 +12,7 @@ from homophily_sim.data.population import generate_population
 from homophily_sim.data.topics import TopicBank
 from homophily_sim.domain.agent import StudentAgent
 from homophily_sim.domain.interaction import InteractionRecord
+from homophily_sim.domain.message import MessageRecord
 from homophily_sim.domain.opportunity import ParticipationOpportunity
 from homophily_sim.domain.section import Section
 from homophily_sim.llm.base import LanguageModelProvider
@@ -61,6 +62,7 @@ class HomophilyModel(mesa.Model):  # type: ignore[misc]
         self.last_events: list[ConversationEvent] = []
         self.conversation_count = 0
         self.interactions: list[InteractionRecord] = []
+        self.messages: list[MessageRecord] = []
         self.opportunities: list[ParticipationOpportunity] = []
         self.snapshots: list[NetworkSnapshot] = []
         self.year_snapshots: list[NetworkSnapshot] = []
@@ -144,6 +146,7 @@ class HomophilyModel(mesa.Model):  # type: ignore[misc]
         )
         self.conversation_count += len(self.last_events)
         self.interactions.extend(record for event in self.last_events for record in event.records)
+        self.messages.extend(message for event in self.last_events for message in event.messages)
         self.opportunities.extend(
             opportunity for event in self.last_events for opportunity in event.opportunities
         )

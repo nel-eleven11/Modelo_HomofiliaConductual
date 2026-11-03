@@ -161,6 +161,7 @@ def run_pilot_2(
     destination = save_run(
         output_root, config=config, agents=students,
         interactions=model.interactions, metadata=metadata,
+        messages=model.messages,
     )
     with (destination / "weekly_metrics.csv").open("w", encoding="utf-8", newline="") as output:
         writer = csv.DictWriter(output, fieldnames=list(weekly_rows[0]))

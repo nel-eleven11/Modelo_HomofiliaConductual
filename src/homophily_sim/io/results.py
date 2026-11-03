@@ -11,6 +11,7 @@ import pandas as pd  # type: ignore[import-untyped]
 from homophily_sim.config import SimulationConfig
 from homophily_sim.domain.agent import StudentAgent
 from homophily_sim.domain.interaction import InteractionRecord
+from homophily_sim.domain.message import MessageRecord
 from homophily_sim.domain.opportunity import ParticipationOpportunity
 from homophily_sim.io.metadata import RunMetadata
 
@@ -34,6 +35,7 @@ class StoredRun:
     relationships: pd.DataFrame
     metadata: RunMetadata
     opportunities: list[ParticipationOpportunity] = dataclass_field(default_factory=list)
+    messages: list[MessageRecord] = dataclass_field(default_factory=list)
 
 
 def _agent_row(agent: StudentAgent) -> dict[str, object]:
@@ -60,6 +62,7 @@ def _validate_run(
     interactions: list[InteractionRecord],
     metadata: RunMetadata,
     opportunities: list[ParticipationOpportunity] | None = None,
+    messages: list[MessageRecord] | None = None,
 ) -> None:
     if metadata.scenario != config.scenario:
         raise ValueError("metadata scenario does not match configuration")
@@ -110,6 +113,22 @@ def _validate_run(
             item.participated for item in opportunities
         ):
             raise ValueError("evaluation count must equal exposures plus responses")
+    if messages is not None:
+        by_id = {message.message_id: message for message in messages}
+        if len(by_id) != len(messages) or any(
+            message.run_id != metadata.run_id or message.seed != metadata.seed
+            or message.scenario != config.scenario or message.sender_id not in known_ids
+            for message in messages
+        ):
+            raise ValueError("messages must be unique and match the saved run")
+        if any(
+            record.message_id not in by_id
+            or record.sender_id != by_id[record.message_id].sender_id
+            or record.sender_text != by_id[record.message_id].message_text
+            or record.sentiment_valence != by_id[record.message_id].sampled_valence
+            for record in interactions
+        ):
+            raise ValueError("every directed evaluation must match its saved message")
 
 
 def save_run(
@@ -120,9 +139,10 @@ def save_run(
     interactions: list[InteractionRecord],
     metadata: RunMetadata,
     opportunities: list[ParticipationOpportunity] | None = None,
+    messages: list[MessageRecord] | None = None,
 ) -> Path:
     """Write run artifacts, refusing to overwrite a previous run."""
-    _validate_run(config, agents, interactions, metadata, opportunities)
+    _validate_run(config, agents, interactions, metadata, opportunities, messages)
     root = Path(output_root)
     destination = root / metadata.run_id
     root.mkdir(parents=True, exist_ok=True)
@@ -152,6 +172,11 @@ def save_run(
                 [item.model_dump(mode="python") for item in opportunities],
                 columns=list(ParticipationOpportunity.model_fields),
             ).to_parquet(stage / "participation_attempts.parquet", index=False)
+        if messages is not None:
+            pd.DataFrame(
+                [item.model_dump(mode="python") for item in messages],
+                columns=list(MessageRecord.model_fields),
+            ).to_parquet(stage / "messages.parquet", index=False)
         stage.rename(destination)
     return destination
 
@@ -187,9 +212,16 @@ def load_run(path: str | Path) -> StoredRun:
          pd.read_parquet(opportunities_path).to_dict("records")]
         if opportunities_path.exists() else []
     )
+    messages_path = directory / "messages.parquet"
+    messages = (
+        [MessageRecord.model_validate(row) for row in
+         pd.read_parquet(messages_path).to_dict("records")]
+        if messages_path.exists() else []
+    )
     _validate_run(config, agents, interactions, metadata,
-                  opportunities if opportunities_path.exists() else None)
+                  opportunities if opportunities_path.exists() else None,
+                  messages if messages_path.exists() else None)
     expected = pd.DataFrame(_relationship_rows(agents), columns=list(_RELATIONSHIP_COLUMNS))
     if not relationships.equals(expected):
         raise ValueError("relationship table does not match saved agents")
-    return StoredRun(config, agents, interactions, relationships, metadata, opportunities)
+    return StoredRun(config, agents, interactions, relationships, metadata, opportunities, messages)

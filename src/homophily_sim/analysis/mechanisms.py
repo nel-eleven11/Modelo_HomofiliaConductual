@@ -11,6 +11,7 @@ import networkx as nx  # type: ignore[import-untyped]
 
 from homophily_sim.data.topics import TopicBank
 from homophily_sim.domain.interaction import InteractionRecord
+from homophily_sim.domain.message import MessageRecord
 from homophily_sim.domain.opportunity import ParticipationOpportunity
 from homophily_sim.io.results import StoredRun, load_run
 
@@ -24,6 +25,8 @@ class MechanismTables:
     topics: list[dict[str, Any]]
     students: list[dict[str, Any]]
     graphs: list[tuple[nx.DiGraph, nx.DiGraph]]
+    tones: list[dict[str, Any]] | None = None
+    tone_by_interest: list[dict[str, Any]] | None = None
 
 
 def _mean(values: list[float]) -> float | None:
@@ -72,7 +75,8 @@ def _repeat_rates(
     repeated: Counter[tuple[int, str]] = Counter()
     total: Counter[tuple[int, str]] = Counter()
     for item in opportunities:
-        pair = tuple(sorted((item.initiator_id, item.candidate_id)))
+        pair = (min(item.initiator_id, item.candidate_id),
+                max(item.initiator_id, item.candidate_id))
         semester = item.semester
         total[semester, "exposure"] += 1
         repeated[semester, "exposure"] += pair in seen_exposure
@@ -153,10 +157,13 @@ def summarize_run(run: StoredRun, bank: TopicBank) -> MechanismTables:
         raise ValueError("saved topic bank version differs from run metadata")
     by_sem_opps: dict[int, list[ParticipationOpportunity]] = defaultdict(list)
     by_sem_records: dict[int, list[InteractionRecord]] = defaultdict(list)
+    by_sem_messages: dict[int, list[MessageRecord]] = defaultdict(list)
     for item in run.opportunities:
         by_sem_opps[item.semester].append(item)
     for record in run.interactions:
         by_sem_records[record.semester].append(record)
+    for message in run.messages:
+        by_sem_messages[message.semester].append(message)
     repeats = _repeat_rates(run.opportunities)
     topics_by_id = {topic.topic_id: topic for topic in bank.topics}
     evaluation = _base_graph(run)
@@ -171,10 +178,13 @@ def summarize_run(run: StoredRun, bank: TopicBank) -> MechanismTables:
     relationship_rows: list[dict[str, Any]] = []
     topic_rows: list[dict[str, Any]] = []
     student_rows: list[dict[str, Any]] = []
+    tone_rows: list[dict[str, Any]] = []
+    interest_tone_rows: list[dict[str, Any]] = []
     graphs: list[tuple[nx.DiGraph, nx.DiGraph]] = []
     for semester in range(1, run.config.semesters + 1):
         opportunities = by_sem_opps[semester]
         records = by_sem_records[semester]
+        messages = by_sem_messages[semester]
         replies = [item for item in opportunities if item.participated]
         _update_graphs(evaluation, response, records, opportunities)
         current_membership = _communities(evaluation)
@@ -198,10 +208,12 @@ def summarize_run(run: StoredRun, bank: TopicBank) -> MechanismTables:
             "semester": semester,
         }
         exposure_counts: Counter[tuple[int, int]] = Counter(
-            tuple(sorted((item.initiator_id, item.candidate_id))) for item in opportunities
+            (min(item.initiator_id, item.candidate_id),
+             max(item.initiator_id, item.candidate_id)) for item in opportunities
         )
         response_counts: Counter[tuple[int, int]] = Counter(
-            tuple(sorted((item.initiator_id, item.candidate_id))) for item in replies
+            (min(item.initiator_id, item.candidate_id),
+             max(item.initiator_id, item.candidate_id)) for item in replies
         )
         initiators = {item.initiator_id for item in opportunities}
         responders = {item.candidate_id for item in replies}
@@ -219,8 +231,35 @@ def summarize_run(run: StoredRun, bank: TopicBank) -> MechanismTables:
         response_values = [response_by_student[node] for node in evaluation.nodes]
         agreement_values = [record.agreement for record in records]
         sentiment_values = [record.sentiment_valence for record in records]
+        message_by_id = {message.message_id: message for message in messages}
+        tone_groups = {
+            tone: [record for record in records
+                   if record.message_id in message_by_id
+                   and message_by_id[record.message_id].sampled_tone == tone]
+            for tone in ("negative", "neutral", "positive")
+        }
+        tone_metrics = {
+            f"{tone}_message_rate": (
+                sum(message.sampled_tone == tone for message in messages) / len(messages)
+                if messages else None
+            )
+            for tone in ("negative", "neutral", "positive")
+        }
+        tone_metrics.update({
+            "mean_expressed_valence": _mean([message.sampled_valence for message in messages]),
+            "mean_evaluated_valence": _mean(sentiment_values) if messages else None,
+        })
+        for tone, tone_records in tone_groups.items():
+            tone_metrics[f"mean_interaction_score_{tone}_tone"] = _mean(
+                [record.interaction_score for record in tone_records]
+            )
+            tone_metrics[f"mean_relationship_delta_{tone}_tone"] = _mean(
+                [record.relationship_after - record.relationship_before
+                 for record in tone_records]
+            )
         interaction_rows.append({
-            **common, "conversation_count": len({item.conversation_id for item in opportunities}),
+            **common, **tone_metrics,
+            "conversation_count": len({item.conversation_id for item in opportunities}),
             "exposure_count": len(opportunities), "directed_evaluation_count": len(records),
             "response_count": len(replies), "unique_initiator_count": len(initiators),
             "unique_responder_count": len(responders),
@@ -278,6 +317,30 @@ def summarize_run(run: StoredRun, bank: TopicBank) -> MechanismTables:
             "active_response_edge_count": response.number_of_edges(),
             "active_response_density": float(nx.density(response)),
         })
+        for tone, tone_records in tone_groups.items():
+            tone_rows.append({
+                **common, "tone": tone,
+                "message_count": sum(message.sampled_tone == tone for message in messages),
+                "directed_evaluation_count": len(tone_records),
+                "mean_interaction_score": _mean([
+                    record.interaction_score for record in tone_records
+                ]),
+                "mean_relationship_delta": _mean([
+                    record.relationship_after - record.relationship_before
+                    for record in tone_records
+                ]),
+            })
+        for interest in (0.0, 0.5, 1.0):
+            interest_messages = [
+                message for message in messages if message.sender_topic_interest == interest
+            ]
+            for tone in ("negative", "neutral", "positive"):
+                count = sum(message.sampled_tone == tone for message in interest_messages)
+                interest_tone_rows.append({
+                    **common, "sender_topic_interest": interest, "tone": tone,
+                    "message_count": count, "total_messages_at_interest": len(interest_messages),
+                    "tone_rate": count / len(interest_messages) if interest_messages else None,
+                })
         relationship_rows.append({
             **common, "observed_evaluation_relationship_count": evaluation.number_of_edges(),
             "active_evaluation_relationship_count": len(eval_pairs),
@@ -377,7 +440,8 @@ def summarize_run(run: StoredRun, bank: TopicBank) -> MechanismTables:
         previous_eval_activity = eval_pairs
         previous_response_activity = response_pairs
         previous_strong = strong
-    return MechanismTables(interaction_rows, relationship_rows, topic_rows, student_rows, graphs)
+    return MechanismTables(interaction_rows, relationship_rows, topic_rows, student_rows,
+                           graphs, tone_rows, interest_tone_rows)
 
 
 def summarize_saved_run(path: str | Path, bank: TopicBank) -> MechanismTables:

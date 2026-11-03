@@ -15,6 +15,7 @@ class InteractionRecord(BaseModel):
     course_id: str = Field(min_length=1)
     section_id: str = Field(min_length=1)
     conversation_id: str = Field(min_length=1)
+    message_id: str | None = None
     topic_id: str = Field(min_length=1)
     sender_id: int = Field(ge=0)
     receiver_id: int = Field(ge=0)

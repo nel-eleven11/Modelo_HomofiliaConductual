@@ -6,14 +6,14 @@ Computación de la Universidad del Valle de Guatemala, durante 10 semestres.
 Los agentes no representan personas reales y el modelo no predice amistades reales.
 Los parámetros iniciales son operacionales, no estimaciones empíricamente calibradas.
 
-**Metodología vigente:** las corridas experimentales usan lenguaje y sentimiento
-simulados. No necesitan `GEMINI_API_KEY`, acceso de red ni el clasificador local
-de Transformers. `MockSentimentAnalyzer` devuelve sentimiento neutral para
-todos los mensajes (`sentiment_valence = 0.5`); por ello, el sentimiento no
-varía entre escenarios. La integración con Gemini y los pilotos que la usaron
-se conservan solo como antecedentes históricos. La prueba longitudinal pagada
-se detuvo tras cinco semanas completas y no forma parte de los resultados
-comparativos.
+**Metodología vigente:** las corridas experimentales usan lenguaje y tono
+emocional simulados. No necesitan `GEMINI_API_KEY`, acceso de red ni el
+clasificador local de Transformers. El tono expresado se sortea una vez por
+mensaje según el interés del emisor en el tema. Su postura temática permanece
+independiente del tono. Los resultados anteriores con neutralidad constante,
+Gemini o clasificador local son históricos y deben analizarse por separado.
+La prueba longitudinal pagada se detuvo tras cinco semanas completas y no
+forma parte de los resultados comparativos.
 
 ## Estado
 
@@ -321,12 +321,35 @@ versionan.
 ## Lenguaje y sentimiento de las corridas actuales
 
 `MockLanguageModelProvider` crea frases breves en español a partir de la
-orientación del agente y el tema. `MockSentimentAnalyzer` devuelve siempre
-`p_negative = 0`, `p_neutral = 1`, `p_positive = 0`, por lo que la valencia es
-`0.5`. Con los pesos iniciales, el puntaje de interacción queda
-`s_ij = 0.75 * acuerdo_ij + 0.125`. El texto generado no introduce una señal
-adicional de sentimiento. Las reglas de exposición, participación y actualización
-de vínculos se mantienen igual.
+orientación del agente, el tema y un tono sorteado. En corridas nuevas,
+`p_neutral = 0.70 - 0.40 * interés_del_emisor`, con interés 0, 0.5 o 1;
+las probabilidades positiva y negativa comparten por igual el resto.
+El tono negativo, neutral o positivo produce valencia 0, 0.5 o 1.
+El puntaje sigue siendo `s_ij = 0.75 * acuerdo_ij + 0.25 * valencia` y la
+actualización de relaciones conserva `alpha_relationship = 0.20`.
+La participación utiliza el vínculo previo a la evaluación actual. La decisión
+de participar y el sorteo de tono usan flujos aleatorios independientes.
+`MockSentimentAnalyzer` continúa disponible para reproducir la metodología
+histórica; la corrida nueva utiliza el tono sorteado como dato explícito.
+
+Cada mensaje nuevo se guarda en `messages.parquet` con las probabilidades,
+interés y orientación del emisor, tono, valencia, texto e identificador del flujo
+aleatorio. Las evaluaciones en `interactions.parquet` enlazan al mensaje mediante
+`message_id`: un mensaje escuchado por siete estudiantes cuenta una vez en
+`positive_message_rate`, pero siete veces en `mean_evaluated_valence`.
+`interaction_summary.csv` agrega tasas de tono y valencias por semestre;
+`tone_summary.csv` informa puntuación y cambio de vínculo por tono;
+`tone_by_interest.csv` registra la distribución por interés del emisor.
+Estas tablas se reconstruyen desde Parquet sin llamadas a Gemini. La figura
+`tone_trends.png` muestra su evolución en las comparaciones de escenarios.
+
+La ejecución principal nueva usa `outputs/expressed-tone-v1-scenarios/` para
+mantener separadas las corridas anteriores. Los controles se pueden ejecutar
+con `--sentiment-rule neutral_constant`, `fixed_random` o
+`interest_conditioned`, cada uno con un directorio `--output` distinto.
+Se pueden variar `--neutral-base`, `--interest-effect` y
+`--sentiment-weight`; este último ajusta automáticamente el peso del acuerdo.
+Los valores son supuestos operacionales, no distribuciones humanas calibradas.
 
 El código de Gemini y del clasificador local permanece para documentar los
 pilotos históricos; no participa en los experimentos vigentes. No ejecutar los

@@ -14,10 +14,12 @@ from homophily_sim.data.topics import TopicBank, load_topics
 from homophily_sim.experiments.runner import _report, _write_csv, _write_json
 from homophily_sim.experiments.sensitivity import _group_summaries, _paired_deltas
 from homophily_sim.io.mechanisms import export_mechanisms, mechanism_row, read_csv, write_csv
+from homophily_sim.visualization.tone_plots import plot_tone_trends
 
 TABLES = (
     "interaction_summary.csv", "relationship_evolution.csv",
     "topic_summary.csv", "student_activity.csv",
+    "tone_summary.csv", "tone_by_interest.csv",
 )
 
 
@@ -57,6 +59,8 @@ def rebuild_experiment(destination: Path) -> Path:
             all_tables[name].extend(read_csv(run_dir / name))
     _write_csv(destination / "run_inventory.csv", inventory)
     _write_csv(destination / "run_metrics.csv", rows)
+    if not sensitivity:
+        plot_tone_trends(rows, destination)
     for name in TABLES:
         write_csv(destination / name, all_tables[name])
     if sensitivity:

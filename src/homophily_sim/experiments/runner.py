@@ -30,6 +30,7 @@ from homophily_sim.llm.mock import MockLanguageModelProvider
 from homophily_sim.network.metrics import NetworkMetrics
 from homophily_sim.nlp.mock import MockSentimentAnalyzer
 from homophily_sim.simulation.model import HomophilyModel
+from homophily_sim.visualization.tone_plots import plot_tone_trends
 
 
 def _write_json(path: Path, value: Any) -> None:
@@ -111,13 +112,14 @@ def _one_run(
         config, run_id=run_id, seed=seed, prompt_version="mock-v1",
         topic_bank_version=bank.topic_bank_version,
         demographic_calibration_version=profile.version,
-        model_name="mock", sentiment_model_name="mock",
+        model_name="mock", sentiment_model_name="expressed-tone-v1",
         start_time=started, end_time=datetime.now(UTC),
     )
     destination = save_run(
         run_root, config=config, agents=model.students,
         interactions=model.interactions, metadata=metadata,
         opportunities=model.opportunities,
+        messages=model.messages,
     )
     mechanisms = export_mechanisms(destination, bank)
     rows = [
@@ -189,14 +191,28 @@ def _report(
 
 
 def run_scenarios(
-    *, output_root: str | Path = "outputs/phase-18-scenarios",
+    *, output_root: str | Path = "outputs/expressed-tone-v1-scenarios",
     seeds: Sequence[int] = tuple(range(1, 31)), smoke: bool = False,
+    sentiment_rule: str = "interest_conditioned",
+    sentiment_neutral_base: float = 0.70,
+    sentiment_interest_effect: float = 0.40,
+    sentiment_weight: float = 0.25,
 ) -> Path:
     """Execute or resume paired seeds, persisting every run and aggregate."""
     if not seeds or len(set(seeds)) != len(seeds) or any(seed < 0 for seed in seeds):
         raise ValueError("seeds must be a nonempty list of distinct nonnegative integers")
     root = Path(__file__).resolve().parents[3]
     configs = load_homophily_scenarios(root, smoke=smoke)
+    configs = {
+        name: SimulationConfig.model_validate({
+            **config.model_dump(), "sentiment_rule": sentiment_rule,
+            "sentiment_neutral_base": sentiment_neutral_base,
+            "sentiment_interest_effect": sentiment_interest_effect,
+            "w_sentiment": sentiment_weight,
+            "w_agreement": 1 - sentiment_weight,
+        })
+        for name, config in configs.items()
+    }
     bank = load_topics(root / "data/topics/topics_v1.yaml")
     profile = load_demographic_profile(
         root / "data/demographics/profiles_v1.yaml",
@@ -213,7 +229,7 @@ def run_scenarios(
         "topic_bank_version": bank.topic_bank_version,
         "demographic_calibration_version": profile.version,
         "model_name": "mock", "prompt_version": "mock-v1",
-        "sentiment_model_name": "mock",
+        "sentiment_model_name": "expressed-tone-v1",
     }
     plan_path = destination / "experiment_plan.json"
     if plan_path.exists():
@@ -231,6 +247,7 @@ def run_scenarios(
         name: [] for name in (
             "interaction_summary.csv", "relationship_evolution.csv",
             "topic_summary.csv", "student_activity.csv",
+            "tone_summary.csv", "tone_by_interest.csv",
         )
     }
     total = len(seeds) * len(configs)
@@ -269,6 +286,7 @@ def run_scenarios(
     sizes = community_size_distribution(rows)
     _write_csv(destination / "run_inventory.csv", inventory)
     _write_csv(destination / "run_metrics.csv", rows)
+    plot_tone_trends(rows, destination)
     _write_csv(destination / "scenario_summary.csv", summary)
     _write_csv(destination / "paired_final_differences.csv", paired)
     _write_csv(destination / "community_size_distribution.csv", sizes)
@@ -289,12 +307,23 @@ def run_scenarios(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=Path("outputs/phase-18-scenarios"))
+    parser.add_argument("--output", type=Path, default=Path("outputs/expressed-tone-v1-scenarios"))
     parser.add_argument("--seed-count", type=int, default=30)
+    parser.add_argument("--sentiment-rule", choices=(
+        "interest_conditioned", "fixed_random", "neutral_constant"
+    ), default="interest_conditioned")
+    parser.add_argument("--neutral-base", type=float, default=0.70)
+    parser.add_argument("--interest-effect", type=float, default=0.40)
+    parser.add_argument("--sentiment-weight", type=float, default=0.25)
     args = parser.parse_args()
     if args.seed_count < 1:
         parser.error("--seed-count must be positive")
-    print(run_scenarios(output_root=args.output, seeds=tuple(range(1, args.seed_count + 1))))
+    print(run_scenarios(
+        output_root=args.output, seeds=tuple(range(1, args.seed_count + 1)),
+        sentiment_rule=args.sentiment_rule, sentiment_neutral_base=args.neutral_base,
+        sentiment_interest_effect=args.interest_effect,
+        sentiment_weight=args.sentiment_weight,
+    ))
 
 
 if __name__ == "__main__":

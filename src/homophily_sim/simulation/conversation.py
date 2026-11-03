@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from math import ceil, fsum
 from random import Random
+from typing import Literal
 
 import numpy as np
 
@@ -13,11 +14,15 @@ from homophily_sim.config import SimulationConfig
 from homophily_sim.data.topics import TopicBank, topic_interest_score
 from homophily_sim.domain.agent import StudentAgent
 from homophily_sim.domain.interaction import InteractionRecord
+from homophily_sim.domain.message import MessageRecord
 from homophily_sim.domain.opportunity import ParticipationOpportunity
 from homophily_sim.domain.section import Section
 from homophily_sim.domain.topic import Topic
 from homophily_sim.llm.base import LanguageModelProvider, UtteranceRequest
+from homophily_sim.llm.mock import MockLanguageModelProvider
 from homophily_sim.nlp.base import SentimentAnalyzer
+from homophily_sim.nlp.mock import MockSentimentAnalyzer
+from homophily_sim.nlp.tone import RULE_VERSION, Tone, sample_tone
 from homophily_sim.simulation.calendar import SemesterSchedule
 from homophily_sim.social.evaluation import agreement, interaction_score, sentiment_valence
 from homophily_sim.social.participation import participation_probability
@@ -58,6 +63,7 @@ class ConversationEvent:
     initial_text: str
     records: tuple[InteractionRecord, ...]
     opportunities: tuple[ParticipationOpportunity, ...] = ()
+    messages: tuple[MessageRecord, ...] = ()
 
 
 def start_weights(students: Sequence[StudentAgent], epsilon_start: float) -> tuple[float, ...]:
@@ -86,6 +92,7 @@ def _utterance_request(
     bank: TopicBank,
     config: SimulationConfig,
     previous_message: str | None,
+    tone: Tone | None = None,
 ) -> UtteranceRequest:
     return UtteranceRequest(
         agent_id=student.id,
@@ -95,6 +102,7 @@ def _utterance_request(
         relevant_interests=_relevant_interests(student, topic, bank),
         extraversion=student.extraversion,
         previous_message=previous_message,
+        tone=tone,
         max_words=config.utterance_max_words,
     )
 
@@ -122,15 +130,19 @@ def _evaluate_message(
     context: ConversationContext,
     participation_chance: float,
     record_index: int,
+    message: MessageRecord | None = None,
 ) -> InteractionRecord:
     before = receiver.relationship_to(sender.id, config.initial_relationship)
     agreement_value = agreement(
         receiver.topic_orientations[topic.topic_id], sender.topic_orientations[topic.topic_id]
     )
-    sentiment = sentiment_analyzer.analyze(sender_text)
-    valence = sentiment_valence(
-        sentiment.p_negative, sentiment.p_neutral, sentiment.p_positive
-    )
+    if message is None:
+        sentiment = sentiment_analyzer.analyze(sender_text)
+        valence = sentiment_valence(
+            sentiment.p_negative, sentiment.p_neutral, sentiment.p_positive
+        )
+    else:
+        valence = message.sampled_valence
     score = interaction_score(agreement_value, valence, config)
     after = update_relationship(before, score, config.alpha_relationship)
     record = InteractionRecord(
@@ -142,6 +154,7 @@ def _evaluate_message(
         course_id=context.course_id,
         section_id=context.section_id,
         conversation_id=context.conversation_id,
+        message_id=message.message_id if message else None,
         topic_id=topic.topic_id,
         sender_id=sender.id,
         receiver_id=receiver.id,
@@ -160,6 +173,37 @@ def _evaluate_message(
     return record
 
 
+def _simulated_message(
+    student: StudentAgent, topic: Topic, bank: TopicBank, config: SimulationConfig,
+    language_model: LanguageModelProvider, context: ConversationContext,
+    role: Literal["initial", "response"], previous_message: str | None,
+) -> MessageRecord:
+    interest = topic_interest_score(student.interests, topic, bank)
+    identity = (f"s{context.semester}:w{context.week}:d{context.day}:p{context.period}:"
+                f"{context.course_id}:{context.section_id}:{role}:{student.id}")
+    sampled = sample_tone(interest, config, context.seed, identity)
+    text = language_model.generate_utterance(
+        _utterance_request(student, topic, bank, config, previous_message,
+                           None if config.sentiment_rule == "neutral_constant" else sampled.tone)
+    ).text
+    return MessageRecord(
+        run_id=context.run_id, seed=context.seed, scenario=config.scenario,
+        semester=context.semester, week=context.week, day=context.day,
+        course_id=context.course_id, section_id=context.section_id,
+        conversation_id=context.conversation_id,
+        message_id=f"{context.conversation_id}:{role}:{student.id}",
+        role=role, sender_id=student.id, topic_id=topic.topic_id,
+        sender_topic_interest=interest,
+        sender_topic_orientation=student.topic_orientations[topic.topic_id],
+        sentiment_negative_probability=sampled.negative_probability,
+        sentiment_neutral_probability=sampled.neutral_probability,
+        sentiment_positive_probability=sampled.positive_probability,
+        sampled_tone=sampled.tone, sampled_valence=sampled.valence,
+        sentiment_rule_version=RULE_VERSION, rng_stream=sampled.rng_stream,
+        message_text=text,
+    )
+
+
 def run_conversation(
     students: Sequence[StudentAgent],
     bank: TopicBank,
@@ -176,9 +220,17 @@ def run_conversation(
         list(students), weights=start_weights(students, config.epsilon_start)
     )[0]
     topic = rng.choice(bank.topics)
-    initial_text = language_model.generate_utterance(
-        _utterance_request(initiator, topic, bank, config, previous_message=None)
-    ).text
+    simulated = isinstance(language_model, MockLanguageModelProvider) and isinstance(
+        sentiment_analyzer, MockSentimentAnalyzer
+    )
+    initial_message = (
+        _simulated_message(initiator, topic, bank, config, language_model, context, "initial", None)
+        if simulated else None
+    )
+    initial_text = (initial_message.message_text if initial_message else
+                    language_model.generate_utterance(
+                        _utterance_request(initiator, topic, bank, config, previous_message=None)
+                    ).text)
     exposed = rng.sample(
         [student for student in students if student.id != initiator.id],
         k=ceil(len(students) / 4),
@@ -186,6 +238,7 @@ def run_conversation(
     participants: list[tuple[StudentAgent, float]] = []
     records: list[InteractionRecord] = []
     opportunities: list[ParticipationOpportunity] = []
+    messages: list[MessageRecord] = [initial_message] if initial_message else []
     for receiver in exposed:
         interest = topic_interest_score(receiver.interests, topic, bank)
         prior = receiver.relationship_to(initiator.id, config.initial_relationship)
@@ -210,15 +263,23 @@ def run_conversation(
             participants.append((receiver, chance))
         records.append(_evaluate_message(
             initiator, receiver, initial_text, topic, bank, config,
-            sentiment_analyzer, context, chance, len(records),
+            sentiment_analyzer, context, chance, len(records), initial_message,
         ))
     for responder, chance in participants:
-        response_text = language_model.generate_utterance(
-            _utterance_request(responder, topic, bank, config, previous_message=initial_text)
-        ).text
+        response_message = (
+            _simulated_message(responder, topic, bank, config, language_model, context,
+                               "response", initial_text) if simulated else None
+        )
+        response_text = (response_message.message_text if response_message else
+                         language_model.generate_utterance(
+                             _utterance_request(responder, topic, bank, config,
+                                                previous_message=initial_text)
+                         ).text)
+        if response_message:
+            messages.append(response_message)
         records.append(_evaluate_message(
             responder, initiator, response_text, topic, bank, config,
-            sentiment_analyzer, context, chance, len(records),
+            sentiment_analyzer, context, chance, len(records), response_message,
         ))
     return ConversationEvent(
         conversation_id=context.conversation_id,
@@ -229,6 +290,7 @@ def run_conversation(
         initial_text=initial_text,
         records=tuple(records),
         opportunities=tuple(opportunities),
+        messages=tuple(messages),
     )
 
 

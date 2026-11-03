@@ -150,6 +150,7 @@ def run_longitudinal_pilot(
     destination = save_run(
         output_root, config=selected, agents=model.students,
         interactions=model.interactions, metadata=metadata,
+        messages=model.messages,
     )
     series = model.metric_history
     _write_json(

@@ -13,6 +13,12 @@ class MockLanguageModelProvider:
             stance = "No estoy a favor de esta idea."
         else:
             stance = "Tengo una postura neutral sobre esta idea."
+        tone = {
+            "positive": "Me alegra que podamos conversar.",
+            "neutral": "Comparto mi opinión.",
+            "negative": "Me frustra cómo se está discutiendo esto.",
+            None: "",
+        }[request.tone]
         context = "Sobre tu comentario y " if request.previous_message else "Sobre "
-        words = f"{stance} {context}{request.topic_prompt}".split()
+        words = f"{tone} {stance} {context}{request.topic_prompt}".split()
         return UtteranceResult(text=" ".join(words[:request.max_words]))

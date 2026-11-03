@@ -23,6 +23,9 @@ alpha_relationship: 0.20
 gamma_section: 0.50
 w_agreement: 0.75
 w_sentiment: 0.25
+sentiment_rule: interest_conditioned
+sentiment_neutral_base: 0.70
+sentiment_interest_effect: 0.40
 epsilon_start: 0.25
 initial_relationship: 0.50
 strong_relationship_threshold: 0.70

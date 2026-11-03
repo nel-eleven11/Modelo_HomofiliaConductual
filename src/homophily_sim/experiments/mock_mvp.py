@@ -113,6 +113,7 @@ def run_mock_mvp(
         agents=students,
         interactions=model.interactions,
         metadata=metadata,
+        messages=model.messages if model.messages else None,
     )
     (destination / "metrics_by_semester.json").write_text(
         json.dumps(

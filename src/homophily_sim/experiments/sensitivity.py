@@ -31,6 +31,9 @@ SENSITIVITY_LEVELS: dict[str, tuple[float, float, float]] = {
     "beta_R": (0.30, 0.60, 0.90),
     "w_agreement": (0.60, 0.75, 0.90),
     "gamma_section": (0.25, 0.50, 0.75),
+    "sentiment_neutral_base": (0.60, 0.70, 0.80),
+    "sentiment_interest_effect": (0.00, 0.40, 0.20),
+    "w_sentiment": (0.00, 0.25, 0.40),
 }
 
 
@@ -61,7 +64,12 @@ def build_variants(
         low, baseline, high = SENSITIVITY_LEVELS[parameter]
         if abs(float(getattr(base, parameter)) - baseline) > 1e-9:
             raise ValueError(f"baseline differs from the planned {parameter} value")
-        for level, value in (("low", low), ("high", high)):
+        levels = [("low", low), ("high", high)]
+        if parameter == "sentiment_interest_effect":
+            levels = [("zero", 0.0), ("medium", 0.20)]
+        elif parameter == "w_sentiment":
+            levels = [("zero", 0.0), ("low", 0.15), ("high", 0.40)]
+        for level, value in levels:
             data = base.model_dump()
             data[parameter] = value
             if parameter == "w_interest":
@@ -70,6 +78,8 @@ def build_variants(
                     data[name] = (1 - value) * float(getattr(base, name)) / other_total
             if parameter == "w_agreement":
                 data["w_sentiment"] = 1 - value
+            if parameter == "w_sentiment":
+                data["w_agreement"] = 1 - value
             data["scenario"] = f"{base.scenario}_{parameter}_{level}"
             variants.append(
                 Variant(parameter, level, value, SimulationConfig.model_validate(data))
@@ -144,13 +154,14 @@ def _run_variant(
         config, run_id=run_id, seed=seed, prompt_version="mock-v1",
         topic_bank_version=bank.topic_bank_version,
         demographic_calibration_version=profile.version,
-        model_name="mock", sentiment_model_name="mock",
+        model_name="mock", sentiment_model_name="expressed-tone-v1",
         start_time=started, end_time=datetime.now(UTC),
     )
     destination = save_run(
         run_root, config=config, agents=model.students,
         interactions=model.interactions, metadata=metadata,
         opportunities=model.opportunities,
+        messages=model.messages,
     )
     mechanisms = export_mechanisms(destination, bank)
     rows = []
@@ -182,7 +193,7 @@ def _run_variant(
 
 
 def run_sensitivity(
-    *, output_root: str | Path = "outputs/phase-19-sensitivity",
+    *, output_root: str | Path = "outputs/expressed-tone-v1-sensitivity",
     seeds: Sequence[int] = tuple(range(1, 6)),
     parameters: Sequence[str] = tuple(SENSITIVITY_LEVELS),
     smoke: bool = False,
@@ -217,7 +228,7 @@ def run_sensitivity(
         "topic_bank_version": bank.topic_bank_version,
         "demographic_calibration_version": profile.version,
         "model_name": "mock", "prompt_version": "mock-v1",
-        "sentiment_model_name": "mock",
+        "sentiment_model_name": "expressed-tone-v1",
     }
     plan_path = destination / "sensitivity_plan.json"
     if plan_path.exists():
@@ -235,6 +246,7 @@ def run_sensitivity(
         name: [] for name in (
             "interaction_summary.csv", "relationship_evolution.csv",
             "topic_summary.csv", "student_activity.csv",
+            "tone_summary.csv", "tone_by_interest.csv",
         )
     }
     total = len(seeds) * sum(len(variants) for variants in conditions.values())
@@ -292,7 +304,8 @@ def run_sensitivity(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=Path("outputs/phase-19-sensitivity"))
+    parser.add_argument("--output", type=Path,
+                        default=Path("outputs/expressed-tone-v1-sensitivity"))
     parser.add_argument("--seed-count", type=int, default=5)
     args = parser.parse_args()
     if args.seed_count < 1:

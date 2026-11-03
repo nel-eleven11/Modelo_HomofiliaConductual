@@ -15,6 +15,7 @@ class UtteranceRequest(BaseModel):
     relevant_interests: tuple[str, ...]
     extraversion: float = Field(ge=0, le=10)
     previous_message: str | None = None
+    tone: Literal["negative", "neutral", "positive"] | None = None
     max_words: int = Field(gt=0)
     language: Literal["es"] = "es"
 
