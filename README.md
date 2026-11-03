@@ -512,3 +512,23 @@ con proveedores simulados y resume variación entre semillas. Guarda tablas,
 configuraciones por corrida y un ZIP resumido en `outputs/phase-20-validation/`
 y `outputs/phase-20-validation-summary.zip`. El informe explica los alcances
 y las limitaciones de las conclusiones.
+# Corrida longitudinal con Gemini
+
+Para ejecutar una sola corrida real del escenario base (`homophily_medium`,
+`h=0.50`), semilla 1 y los 10 semestres, configura `GEMINI_API_KEY` y
+`GEMINI_MODEL=gemini-3.5-flash-lite` en `.env`, activa `.venv` e instala las
+dependencias de `requirements-nlp.txt`. Luego ejecuta:
+
+```bash
+python -m homophily_sim.experiments.real_gemini --seed 1 --max-cost-usd 10
+```
+
+El ejecutor guarda un checkpoint al concluir cada semana en
+`outputs/real-gemini-medium-seed-001/checkpoint.sqlite3`. Si se interrumpe,
+el mismo comando reanuda desde la última semana completa usando la caché
+local de textos. `--max-weeks N` permite detenerlo después de N semanas
+totales para una comprobación breve. El límite monetario es una estimación
+basada en los tokens informados por Gemini, con las tarifas estándar de
+entrada y salida vigentes al preparar este ejecutor; revisa la facturación
+real en Google AI Studio. Los resultados finales quedan en `runs/` dentro
+del directorio de salida, con Parquet, CSV, GraphML y métricas semestrales.
