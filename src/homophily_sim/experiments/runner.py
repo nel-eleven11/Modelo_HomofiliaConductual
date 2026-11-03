@@ -30,7 +30,6 @@ from homophily_sim.llm.mock import MockLanguageModelProvider
 from homophily_sim.network.metrics import NetworkMetrics
 from homophily_sim.nlp.mock import MockSentimentAnalyzer
 from homophily_sim.simulation.model import HomophilyModel
-from homophily_sim.visualization.tone_plots import plot_tone_trends
 
 
 def _write_json(path: Path, value: Any) -> None:
@@ -286,6 +285,8 @@ def run_scenarios(
     sizes = community_size_distribution(rows)
     _write_csv(destination / "run_inventory.csv", inventory)
     _write_csv(destination / "run_metrics.csv", rows)
+    from homophily_sim.visualization.tone_plots import plot_tone_trends
+
     plot_tone_trends(rows, destination)
     _write_csv(destination / "scenario_summary.csv", summary)
     _write_csv(destination / "paired_final_differences.csv", paired)
